@@ -1,0 +1,175 @@
+<UserControl x:Class="AulaSegura.App.Views.CategoriesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d" d:DesignHeight="600" d:DesignWidth="1000">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Back Button -->
+        <Button Grid.Row="0" Content="← Volver al Dashboard" Command="{Binding GoBackCommand}"
+                Background="#757575" Foreground="White" Padding="15,8" BorderThickness="0" 
+                Cursor="Hand" HorizontalAlignment="Left" Margin="0,0,0,15" FontSize="13">
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#616161"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+
+        <!-- Header and Actions -->
+        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="📂 Gestión de Categorías" FontSize="20" FontWeight="Bold" Foreground="#424242"/>
+                    <TextBlock Text="Administre las categorías de filtrado de contenido" FontSize="12" Foreground="#757575" Margin="0,5,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Content="➕ Agregar Categoría" Command="{Binding AddNewCommand}" 
+                        Background="#2196F3" Foreground="White" Padding="15,8" BorderThickness="0" Cursor="Hand"/>
+            </Grid>
+        </Border>
+
+        <!-- Add/Edit Form -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,15"
+                Visibility="{Binding IsFormVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel>
+                <TextBlock Text="{Binding IsEditMode, Converter={StaticResource BoolToStringConverter}, ConverterParameter='✏️ Editar Categoría|➕ Agregar Nueva Categoría'}" 
+                           FontSize="18" FontWeight="Bold" Foreground="#424242" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Nombre:" FontSize="13" FontWeight="SemiBold" Foreground="#616161" Margin="0,0,0,5"/>
+                <TextBox Text="{Binding FormName, UpdateSourceTrigger=PropertyChanged}" 
+                         Padding="10,8" FontSize="13" BorderBrush="#CCCCCC" BorderThickness="1" 
+                         Margin="0,0,0,15" ToolTip="Nombre de la categoría"/>
+
+                <TextBlock Text="Descripción:" FontSize="13" FontWeight="SemiBold" Foreground="#616161" Margin="0,0,0,5"/>
+                <TextBox Text="{Binding FormDescription, UpdateSourceTrigger=PropertyChanged}" 
+                         Padding="10,8" FontSize="13" BorderBrush="#CCCCCC" BorderThickness="1" 
+                         Margin="0,0,0,15" AcceptsReturn="True" Height="60" TextWrapping="Wrap"/>
+
+                <TextBlock Text="Color (Hex):" FontSize="13" FontWeight="SemiBold" Foreground="#616161" Margin="0,0,0,5"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                    <TextBox Text="{Binding FormColor, UpdateSourceTrigger=PropertyChanged}" 
+                             Padding="10,8" FontSize="13" BorderBrush="#CCCCCC" BorderThickness="1" 
+                             Width="150" ToolTip="Código de color hexadecimal (ej: #2196F3)"/>
+                    <Rectangle Width="40" Height="30" Fill="{Binding FormColor}" Stroke="#CCCCCC" Margin="10,0,0,0" ToolTip="Vista previa del color"/>
+                </StackPanel>
+
+                <CheckBox Content="Categoría Activa" IsChecked="{Binding FormIsActive}" 
+                          FontSize="13" Foreground="#616161" Margin="0,0,0,20"/>
+
+                <!-- Error Message -->
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="#F44336" FontSize="12" 
+                           Margin="0,0,0,15" TextWrapping="Wrap" 
+                           Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="💾 Guardar" Command="{Binding SaveCommand}" 
+                            Background="#4CAF50" Foreground="White" Padding="15,8" 
+                            BorderThickness="0" Cursor="Hand" FontSize="13" Margin="0,0,10,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#43A047"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Background" Value="#BDBDBD"/>
+                                        <Setter Property="Cursor" Value="Arrow"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Content="❌ Cancelar" Command="{Binding CancelCommand}" 
+                            Background="#757575" Foreground="White" Padding="15,8" 
+                            BorderThickness="0" Cursor="Hand" FontSize="13">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#616161"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- DataGrid -->
+        <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="15">
+            <DataGrid ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}"
+                      AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                      IsReadOnly="True" GridLinesVisibility="Horizontal" RowBackground="White"
+                      AlternatingRowBackground="#FAFAFA" FontSize="13">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nombre" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="Descripción" Binding="{Binding Description}" Width="2*"/>
+                    <DataGridTemplateColumn Header="Color" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Rectangle Width="30" Height="20" Fill="{Binding Color}" Stroke="#CCCCCC"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Estado" Binding="{Binding IsActive, Converter={StaticResource BoolToStringConverter}, ConverterParameter='✅ Activo|❌ Inactivo'}" Width="100"/>
+                    <DataGridTemplateColumn Header="Acciones" Width="200">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Content="✏️ Editar" Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           CommandParameter="{Binding}" Background="#FF9800" Foreground="White" Padding="8,5" Margin="0,0,5,0" BorderThickness="0" Cursor="Hand" FontSize="11"/>
+                                    <Button Content="{Binding IsActive, Converter={StaticResource BoolToStringConverter}, ConverterParameter='⏸️ Desactivar|▶️ Activar'}"
+                                           Command="{Binding DataContext.ToggleActiveCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           CommandParameter="{Binding}" Background="#9C27B0" Foreground="White" Padding="8,5" BorderThickness="0" Cursor="Hand" FontSize="11"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>

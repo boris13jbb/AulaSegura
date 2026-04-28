@@ -1,0 +1,325 @@
+<Window x:Class="AulaSegura.App.Views.DashboardView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        Title="AulaSegura - Dashboard" 
+        Height="700" 
+        Width="1200"
+        WindowStartupLocation="CenterScreen"
+        Background="#F5F5F5">
+    
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#2196F3" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding InstitutionName}" 
+                               FontSize="24" 
+                               FontWeight="Bold" 
+                               Foreground="White"/>
+                    <TextBlock Text="Panel de Control" 
+                               FontSize="14" 
+                               Foreground="#E3F2FD"
+                               Margin="0,5,0,0"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="🔄 Actualizar" 
+                            Command="{Binding RefreshCommand}"
+                            Background="#1976D2"
+                            Foreground="White"
+                            Padding="15,8"
+                            Margin="0,0,10,0"
+                            BorderThickness="0"
+                            Cursor="Hand"/>
+                    <Button Content="🚪 Cerrar Sesión" 
+                            Command="{Binding LogoutCommand}"
+                            Background="#F44336"
+                            Foreground="White"
+                            Padding="15,8"
+                            BorderThickness="0"
+                            Cursor="Hand"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Statistics Cards -->
+                <WrapPanel Margin="0,0,0,20">
+                    <!-- Blocked Sites Card -->
+                    <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,15,15" Width="250" Height="120">
+                        <StackPanel>
+                            <TextBlock Text="🚫 Sitios Bloqueados" 
+                                       FontSize="14" 
+                                       Foreground="#757575"/>
+                            <TextBlock Text="{Binding TotalBlockedSites}" 
+                                       FontSize="36" 
+                                       FontWeight="Bold" 
+                                       Foreground="#F44336"
+                                       Margin="0,10,0,0"/>
+                            <TextBlock Text="Total configurados" 
+                                       FontSize="11" 
+                                       Foreground="#9E9E9E"
+                                       Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Allowed Sites Card -->
+                    <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,15,15" Width="250" Height="120">
+                        <StackPanel>
+                            <TextBlock Text="✅ Sitios Permitidos" 
+                                       FontSize="14" 
+                                       Foreground="#757575"/>
+                            <TextBlock Text="{Binding TotalAllowedSites}" 
+                                       FontSize="36" 
+                                       FontWeight="Bold" 
+                                       Foreground="#4CAF50"
+                                       Margin="0,10,0,0"/>
+                            <TextBlock Text="Lista blanca activa" 
+                                       FontSize="11" 
+                                       Foreground="#9E9E9E"
+                                       Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Categories Card -->
+                    <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,15,15" Width="250" Height="120">
+                        <StackPanel>
+                            <TextBlock Text="📂 Categorías Activas" 
+                                       FontSize="14" 
+                                       Foreground="#757575"/>
+                            <TextBlock Text="{Binding ActiveCategories}" 
+                                       FontSize="36" 
+                                       FontWeight="Bold" 
+                                       Foreground="#2196F3"
+                                       Margin="0,10,0,0"/>
+                            <TextBlock Text="Filtros de contenido" 
+                                       FontSize="11" 
+                                       Foreground="#9E9E9E"
+                                       Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Recent Activity Card -->
+                    <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,15" Width="250" Height="120">
+                        <StackPanel>
+                            <TextBlock Text="📊 Actividad Reciente" 
+                                       FontSize="14" 
+                                       Foreground="#757575"/>
+                            <TextBlock Text="{Binding RecentActivities}" 
+                                       FontSize="36" 
+                                       FontWeight="Bold" 
+                                       Foreground="#FF9800"
+                                       Margin="0,10,0,0"/>
+                            <TextBlock Text="Últimos registros" 
+                                       FontSize="11" 
+                                       Foreground="#9E9E9E"
+                                       Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+
+                <!-- Quick Actions -->
+                <Border Background="White" CornerRadius="8" Padding="20" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Text="⚡ Acciones Rápidas" 
+                                   FontSize="18" 
+                                   FontWeight="Bold" 
+                                   Foreground="#424242"
+                                   Margin="0,0,0,15"/>
+                        <WrapPanel>
+                            <Button Content="🚫 Gestionar Sitios Bloqueados" 
+                                    Command="{Binding NavigateToBlockedSitesCommand}"
+                                    Background="#F44336"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,10,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                            <Button Content="✅ Gestionar Sitios Permitidos" 
+                                    Command="{Binding NavigateToAllowedSitesCommand}"
+                                    Background="#4CAF50"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,10,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                            <Button Content="📂 Administrar Categorías" 
+                                    Command="{Binding NavigateToCategoriesCommand}"
+                                    Background="#2196F3"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,10,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                            <Button Content="⏰ Configurar Horarios" 
+                                    Command="{Binding NavigateToSchedulesCommand}"
+                                    Background="#FF9800"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,10,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                            <Button Content="⚙️ Configuración" 
+                                    Command="{Binding NavigateToSettingsCommand}"
+                                    Background="#9C27B0"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,10,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                            <Button Content="🔑 Palabras Clave" 
+                                    Command="{Binding NavigateToKeywordsCommand}"
+                                    Background="#00BCD4"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,10,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                            <Button Content="🛡️ Reglas de Bloqueo" 
+                                    Command="{Binding NavigateToBlockingRulesCommand}"
+                                    Background="#FF5722"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,10,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                            <Button Content="📊 Reportes" 
+                                    Command="{Binding NavigateToReportsCommand}"
+                                    Background="#607D8B"
+                                    Foreground="White"
+                                    Padding="20,12"
+                                    Margin="0,0,0,10"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    FontSize="13"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- Chart and Logs Section -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Activity Chart -->
+                    <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="20" Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="📈 Actividad de Bloqueo (Últimos 7 días)" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#424242"
+                                       Margin="0,0,0,15"/>
+                            <lvc:CartesianChart Series="{Binding ActivitySeries}" 
+                                               Height="250"
+                                               Margin="0,0,0,10"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Recent Activity Logs -->
+                    <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="20" Margin="10,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="📋 Actividad Reciente" 
+                                       FontSize="16" 
+                                       FontWeight="Bold" 
+                                       Foreground="#424242"
+                                       Margin="0,0,0,15"/>
+                            <ListView ItemsSource="{Binding RecentLogs}" 
+                                     MaxHeight="300"
+                                     BorderThickness="0">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="10" Margin="0,0,0,5" Background="#FAFAFA" CornerRadius="4">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Description}" 
+                                                           FontSize="12" 
+                                                           Foreground="#424242"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}" 
+                                                           FontSize="10" 
+                                                           Foreground="#9E9E9E"
+                                                           Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- System Status -->
+                <Border Background="White" CornerRadius="8" Padding="20" Margin="0,20,0,0">
+                    <StackPanel>
+                        <TextBlock Text="🖥️ Estado del Sistema" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Foreground="#424242"
+                                   Margin="0,0,0,15"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Servicio Windows" 
+                                           FontSize="12" 
+                                           Foreground="#757575"/>
+                                <TextBlock Text="✅ Ejecutándose" 
+                                           FontSize="14" 
+                                           Foreground="#4CAF50"
+                                           FontWeight="SemiBold"
+                                           Margin="0,5,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Nivel de Protección" 
+                                           FontSize="12" 
+                                           Foreground="#757575"/>
+                                <TextBlock Text="{Binding ProtectionLevel}" 
+                                           FontSize="14" 
+                                           Foreground="#2196F3"
+                                           FontWeight="SemiBold"
+                                           Margin="0,5,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Última Actualización" 
+                                           FontSize="12" 
+                                           Foreground="#757575"/>
+                                <TextBlock Text="Ahora" 
+                                           FontSize="14" 
+                                           Foreground="#4CAF50"
+                                           FontWeight="SemiBold"
+                                           Margin="0,5,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

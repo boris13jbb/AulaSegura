@@ -1,0 +1,12 @@
+﻿<Application x:Class="AulaSegura.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:AulaSegura.App"
+             xmlns:converters="clr-namespace:AulaSegura.App.Converters">
+    <Application.Resources>
+        <!-- Value Converters -->
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Application.Resources>
+</Application>

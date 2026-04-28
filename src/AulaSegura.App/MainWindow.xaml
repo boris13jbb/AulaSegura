@@ -1,0 +1,26 @@
+﻿<Window x:Class="AulaSegura.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="AulaSegura - Dashboard" 
+        Height="600" 
+        Width="1000"
+        WindowStartupLocation="CenterScreen">
+    <Grid Background="#F5F5F5">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <TextBlock Text="✅ Login Exitoso" 
+                       FontSize="24" 
+                       Foreground="#4CAF50"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,20"/>
+            <TextBlock Text="La interfaz gráfica está en desarrollo."
+                       FontSize="16"
+                       Foreground="#757575"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="El servicio de bloqueo está activo en segundo plano."
+                       FontSize="14"
+                       Foreground="#9E9E9E"
+                       HorizontalAlignment="Center"
+                       Margin="0,10,0,0"/>
+        </StackPanel>
+    </Grid>
+</Window>
