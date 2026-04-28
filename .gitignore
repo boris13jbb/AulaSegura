@@ -1,0 +1,24 @@
+# Build outputs
+bin/
+obj/
+dist/
+
+# User/IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# SQLite local database artifacts (do not commit)
+*.db
+*.db-wal
+*.db-shm
+
+# OS
+Thumbs.db
+Desktop.ini
