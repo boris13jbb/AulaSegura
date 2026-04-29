@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AulaSegura.App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6f3483da568804ba795e3b78baa6f805caa1fedf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c26be931a49340f27d162b5ab3d7398df9d66e4f")]
 [assembly: System.Reflection.AssemblyProductAttribute("AulaSegura.App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AulaSegura.App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
