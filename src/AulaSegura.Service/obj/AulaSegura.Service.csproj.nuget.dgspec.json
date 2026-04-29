@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj": {}
+    "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj": {}
   },
   "projects": {
-    "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj": {
+    "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj",
+        "projectUniqueName": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj",
         "projectName": "AulaSegura.Core",
-        "projectPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj",
+        "projectPath": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj",
         "packagesPath": "C:\\Users\\BRS\\.nuget\\packages\\",
-        "outputPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\obj\\",
+        "outputPath": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -105,8 +105,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj": {
-                "projectPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj"
+              "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj": {
+                "projectPath": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj"
               },
               "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Shared\\AulaSegura.Shared.csproj": {
                 "projectPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Shared\\AulaSegura.Shared.csproj"
@@ -173,14 +173,14 @@
         }
       }
     },
-    "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj": {
+    "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj",
+        "projectUniqueName": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj",
         "projectName": "AulaSegura.Service",
-        "projectPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj",
+        "projectPath": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj",
         "packagesPath": "C:\\Users\\BRS\\.nuget\\packages\\",
-        "outputPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\obj\\",
+        "outputPath": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -202,8 +202,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj": {
-                "projectPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj"
+              "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj": {
+                "projectPath": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Core\\AulaSegura.Core.csproj"
               },
               "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Infrastructure\\AulaSegura.Infrastructure.csproj": {
                 "projectPath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Infrastructure\\AulaSegura.Infrastructure.csproj"

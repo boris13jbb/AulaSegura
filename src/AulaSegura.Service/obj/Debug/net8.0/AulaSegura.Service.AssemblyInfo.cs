@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AulaSegura.Service")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ce6c086cb9e79ac4249edeefdc6c2a883b9a996a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7018ff9910c77c53d1b19acae17270c24d0cec3c")]
 [assembly: System.Reflection.AssemblyProductAttribute("AulaSegura.Service")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AulaSegura.Service")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

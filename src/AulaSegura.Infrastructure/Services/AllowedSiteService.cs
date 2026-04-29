@@ -1,5 +1,6 @@
 using AulaSegura.Core.Entities;
 using AulaSegura.Core.Interfaces;
+using AulaSegura.Core.Utilities;
 using AulaSegura.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,7 +34,16 @@ public class AllowedSiteService : IAllowedSiteService
 
     public async Task UpdateAllowedSiteAsync(AllowedSite site)
     {
-        _context.AllowedSites.Update(site);
+        // No usar Entry.Update(site): GetAllAllowedSitesAsync ya cargó estas entidades y EF las sigue;
+        // otra instancia con el mismo Id provoca error de tracking.
+        var existing = await _context.AllowedSites.FindAsync(site.Id);
+        if (existing == null)
+            throw new InvalidOperationException("Sitio permitido no encontrado");
+
+        existing.Domain = ValidationHelper.NormalizeDomain(site.Domain);
+        existing.Description = site.Description ?? string.Empty;
+        existing.IsActive = site.IsActive;
+
         await _context.SaveChangesAsync();
     }
 
