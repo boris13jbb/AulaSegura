@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace AulaSegura.App.Converters;
 
@@ -78,4 +79,38 @@ public class BoolToVisibilityConverter : IValueConverter
         }
         return false;
     }
+}
+
+/// <summary>
+/// Convierte bool a pincel de primer plano. Parámetro opcional: "#4CAF50|#F44336" (valor true | valor false).
+/// </summary>
+public sealed class BoolToForegroundBrushConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var trueHex = "#4CAF50";
+        var falseHex = "#F44336";
+        if (parameter is string p && p.Contains('|', StringComparison.Ordinal))
+        {
+            var parts = p.Split('|', 2);
+            if (parts.Length == 2)
+            {
+                trueHex = parts[0].Trim();
+                falseHex = parts[1].Trim();
+            }
+        }
+
+        var pick = value is true ? trueHex : falseHex;
+        try
+        {
+            return (Brush)(new BrushConverter().ConvertFromString(pick) ?? Brushes.Gray);
+        }
+        catch
+        {
+            return Brushes.Gray;
+        }
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) =>
+        throw new NotImplementedException();
 }

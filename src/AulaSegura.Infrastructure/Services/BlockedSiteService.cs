@@ -58,6 +58,8 @@ public class BlockedSiteService : IBlockedSiteService
                 adminId,
                 true);
 
+            await ApplyBlockingRulesAsync(writeAuditLogEntry: false);
+
             return inactive;
         }
 
@@ -81,6 +83,8 @@ public class BlockedSiteService : IBlockedSiteService
             blockedSite.Id,
             adminId,
             true);
+
+        await ApplyBlockingRulesAsync(writeAuditLogEntry: false);
 
         return blockedSite;
     }
@@ -107,6 +111,8 @@ public class BlockedSiteService : IBlockedSiteService
             existing.Id,
             existing.CreatedByAdminId,
             true);
+
+        await ApplyBlockingRulesAsync(writeAuditLogEntry: false);
     }
 
     public async Task DeleteBlockedSiteAsync(int id)
@@ -126,6 +132,8 @@ public class BlockedSiteService : IBlockedSiteService
             site.Id,
             site.CreatedByAdminId,
             true);
+
+        await ApplyBlockingRulesAsync(writeAuditLogEntry: false);
     }
 
     public async Task<BlockedSite?> GetBlockedSiteByIdAsync(int id)
@@ -135,12 +143,16 @@ public class BlockedSiteService : IBlockedSiteService
             .FirstOrDefaultAsync(b => b.Id == id);
     }
 
-    public async Task<IEnumerable<BlockedSite>> GetAllBlockedSitesAsync()
+    public async Task<IEnumerable<BlockedSite>> GetAllBlockedSitesAsync(bool includeInactive = false)
     {
-        return await _context.BlockedSites
-            .Include(b => b.Category)
-            .Where(b => b.IsActive)
-            .OrderBy(b => b.Domain)
+        var query = _context.BlockedSites.Include(b => b.Category).AsQueryable();
+
+        if (!includeInactive)
+            query = query.Where(b => b.IsActive);
+
+        return await query
+            .OrderBy(b => b.IsActive ? 0 : 1)
+            .ThenBy(b => b.Domain)
             .ToListAsync();
     }
 
@@ -159,58 +171,62 @@ public class BlockedSiteService : IBlockedSiteService
             .AnyAsync(b => b.Domain == normalizedDomain && b.IsActive);
     }
 
-    public async Task ApplyBlockingRulesAsync()
+    public async Task ApplyBlockingRulesAsync(bool writeAuditLogEntry = true)
     {
         try
         {
-            // Crear backup del archivo hosts antes de modificarlo
             await _backupService.BackupHostsFileAsync();
 
-            // Obtener sitios bloqueados activos
             var blockedSites = await _context.BlockedSites
                 .Where(b => b.IsActive)
                 .ToListAsync();
 
-            // Obtener sitios permitidos (whitelist) que tienen prioridad
-            var allowedSites = await _context.AllowedSites
+            var allowedSitesRaw = await _context.AllowedSites
                 .Where(a => a.IsActive)
-                .Select(a => a.Domain.ToLowerInvariant())
+                .Select(a => a.Domain)
                 .ToListAsync();
 
-            // Limpiar todas las entradas anteriores de AulaSegura
+            var allowedNormalized = allowedSitesRaw
+                .Select(ValidationHelper.NormalizeDomain)
+                .Where(d => !string.IsNullOrEmpty(d))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
             await _hostsFileManager.ClearAllAulaSeguraEntriesAsync();
 
-            // Agregar nuevas entradas bloqueadas (excepto las que están en whitelist)
-            int addedCount = 0;
+            int domainsWrittenToHosts = 0;
+            int hostsLinesWritten = 0;
+
             foreach (var site in blockedSites)
             {
-                // Verificar que no esté en lista blanca (whitelist tiene prioridad)
-                var isInWhitelist = allowedSites.Any(allowed => 
-                    allowed.Equals(site.Domain.ToLowerInvariant(), StringComparison.OrdinalIgnoreCase));
+                var normalizedSite = ValidationHelper.NormalizeDomain(site.Domain);
+
+                var isInWhitelist = allowedNormalized.Contains(normalizedSite);
 
                 if (!isInWhitelist)
                 {
-                    // Agregar dominio principal
-                    await _hostsFileManager.AddEntryAsync(site.Domain);
-                    addedCount++;
+                    domainsWrittenToHosts++;
 
-                    // Si debe bloquear subdominios, agregar www. también
+                    await _hostsFileManager.AddEntryAsync(site.Domain);
+                    hostsLinesWritten++;
+
                     if (site.BlockSubdomains && !site.Domain.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
                     {
                         await _hostsFileManager.AddEntryAsync($"www.{site.Domain}");
-                        addedCount++;
+                        hostsLinesWritten++;
                     }
                 }
             }
 
-            // Registrar evento exitoso
-            await _activityLogService.LogActivityAsync(
-                SystemConstants.LogActions.ApplyBlockingRules,
-                $"Reglas de bloqueo aplicadas. Total sitios bloqueados: {addedCount}",
-                "System",
-                null,
-                null,
-                true);
+            if (writeAuditLogEntry)
+            {
+                await _activityLogService.LogActivityAsync(
+                    SystemConstants.LogActions.ApplyBlockingRules,
+                    $"Reglas aplicadas al archivo hosts. Dominios aplicados (no lista blanca): {domainsWrittenToHosts}. Entradas en hosts añadidas: {hostsLinesWritten} (p. ej. dominio + www).",
+                    "System",
+                    null,
+                    null,
+                    true);
+            }
         }
         catch (UnauthorizedAccessException)
         {
@@ -227,7 +243,7 @@ public class BlockedSiteService : IBlockedSiteService
                 null,
                 null,
                 false);
-            
+
             throw;
         }
     }

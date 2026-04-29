@@ -65,4 +65,50 @@ public class ActivityLogService : IActivityLogService
 
         return await query.OrderByDescending(l => l.CreatedAt).ToListAsync();
     }
+
+    public async Task<int[]> GetDailyBlockingRelatedLogCountsAsync(int days = 7)
+    {
+        if (days < 1) days = 1;
+
+        var actions = new[]
+        {
+            SystemConstants.LogActions.ApplyBlockingRules,
+            SystemConstants.LogActions.AddBlockedSite,
+            SystemConstants.LogActions.UpdateBlockedSite,
+            SystemConstants.LogActions.DeleteBlockedSite
+        };
+
+        var startInclusiveUtc = DateTime.UtcNow.Date.AddDays(-(days - 1));
+        var endExclusiveUtc = DateTime.UtcNow.Date.AddDays(1);
+
+        var timestamps = await _context.ActivityLogs
+            .AsNoTracking()
+            .Where(l => actions.Contains(l.Action))
+            .Where(l => l.CreatedAt >= startInclusiveUtc && l.CreatedAt < endExclusiveUtc)
+            .Select(l => l.CreatedAt)
+            .ToListAsync();
+
+        var counts = new int[days];
+        foreach (var t in timestamps)
+        {
+            var utcDay = NormalizeToUtcDate(t);
+            var idx = (int)(utcDay - startInclusiveUtc).TotalDays;
+            if ((uint)idx < (uint)days)
+                counts[idx]++;
+        }
+
+        return counts;
+    }
+
+    /// <summary>Asume valores guardados como UTC (CreatedAt usa UtcNow), tolera SQLite sin especificar zona.</summary>
+    private static DateTime NormalizeToUtcDate(DateTime t)
+    {
+        var utc = t.Kind switch
+        {
+            DateTimeKind.Utc => t,
+            DateTimeKind.Local => t.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(t, DateTimeKind.Utc)
+        };
+        return utc.Date;
+    }
 }

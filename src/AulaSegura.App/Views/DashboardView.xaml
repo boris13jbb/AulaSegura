@@ -69,7 +69,7 @@
                                        FontWeight="Bold" 
                                        Foreground="#F44336"
                                        Margin="0,10,0,0"/>
-                            <TextBlock Text="Total configurados" 
+                            <TextBlock Text="Lista negra activos (solo BD)" 
                                        FontSize="11" 
                                        Foreground="#9E9E9E"
                                        Margin="0,5,0,0"/>
@@ -123,7 +123,7 @@
                                        FontWeight="Bold" 
                                        Foreground="#FF9800"
                                        Margin="0,10,0,0"/>
-                            <TextBlock Text="Últimos registros" 
+                            <TextBlock Text="Cantidad mostrada (máx. 20 en bitácora)" 
                                        FontSize="11" 
                                        Foreground="#9E9E9E"
                                        Margin="0,5,0,0"/>
@@ -226,12 +226,13 @@
                     <!-- Activity Chart -->
                     <Border Grid.Column="0" Background="White" CornerRadius="8" Padding="20" Margin="0,0,10,0">
                         <StackPanel>
-                            <TextBlock Text="📈 Actividad de Bloqueo (Últimos 7 días)" 
+                            <TextBlock Text="📈 Eventos de bloqueo en log (7 días, UTC)" 
                                        FontSize="16" 
                                        FontWeight="Bold" 
                                        Foreground="#424242"
                                        Margin="0,0,0,15"/>
-                            <lvc:CartesianChart Series="{Binding ActivitySeries}" 
+                            <lvc:CartesianChart Series="{Binding ActivitySeries}"
+                                               XAxes="{Binding XAxes}"
                                                Height="250"
                                                Margin="0,0,0,10"/>
                         </StackPanel>
@@ -256,7 +257,7 @@
                                                            FontSize="12" 
                                                            Foreground="#424242"
                                                            TextWrapping="Wrap"/>
-                                                <TextBlock Text="{Binding Timestamp, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}" 
+                                                <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}" 
                                                            FontSize="10" 
                                                            Foreground="#9E9E9E"
                                                            Margin="0,3,0,0"/>
@@ -284,7 +285,29 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0">
+                            <StackPanel Grid.Column="0" ToolTip="{Binding HostsFileDetail}">
+                                <TextBlock Text="Archivo hosts (bloqueo real)" 
+                                           FontSize="12" 
+                                           Foreground="#757575"/>
+                                <TextBlock Text="{Binding HostsFilePrimaryStatus}" 
+                                           FontSize="14" 
+                                           FontWeight="SemiBold"
+                                           Margin="0,5,0,0"
+                                           TextWrapping="Wrap"
+                                           Foreground="{Binding HostsFileCanWrite, Converter={StaticResource BoolToForegroundBrushConverter}, ConverterParameter=#4CAF50|#F44336}"/>
+                                <TextBlock Text="{Binding HostsFileDetail}"
+                                           FontSize="11"
+                                           Foreground="#9E9E9E"
+                                           TextWrapping="Wrap"
+                                           Margin="0,6,12,0"
+                                           LineHeight="16"/>
+                                <TextBlock Text="{Binding HostsProbeTimeText}"
+                                           FontSize="10"
+                                           Foreground="#BDBDBD"
+                                           Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
                                 <TextBlock Text="Servicio Windows" 
                                            FontSize="12" 
                                            Foreground="#757575"/>
@@ -293,26 +316,20 @@
                                            Foreground="#4CAF50"
                                            FontWeight="SemiBold"
                                            Margin="0,5,0,0"/>
+                                <TextBlock Text="(Cuando esté instalado por separado)"
+                                           FontSize="10"
+                                           Foreground="#BDBDBD"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap"/>
                             </StackPanel>
 
-                            <StackPanel Grid.Column="1">
+                            <StackPanel Grid.Column="2">
                                 <TextBlock Text="Nivel de Protección" 
                                            FontSize="12" 
                                            Foreground="#757575"/>
                                 <TextBlock Text="{Binding ProtectionLevel}" 
                                            FontSize="14" 
                                            Foreground="#2196F3"
-                                           FontWeight="SemiBold"
-                                           Margin="0,5,0,0"/>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="Última Actualización" 
-                                           FontSize="12" 
-                                           Foreground="#757575"/>
-                                <TextBlock Text="Ahora" 
-                                           FontSize="14" 
-                                           Foreground="#4CAF50"
                                            FontWeight="SemiBold"
                                            Margin="0,5,0,0"/>
                             </StackPanel>

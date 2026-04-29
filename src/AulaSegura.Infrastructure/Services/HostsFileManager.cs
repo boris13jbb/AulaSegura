@@ -12,7 +12,11 @@ public class HostsFileManager
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), 
                      "drivers", "etc", "hosts");
 
-    private const string AULASEGURA_MARKER = "# AULASEGURA-BLOCK";
+    /// <summary>
+    /// Sufijo en la misma línea (tras IP y host). En Windows, una línea que empieza por # es comentario completo y no bloquea; el marcador va al final.
+    /// </summary>
+    private const string AulaseguraLineSuffix = " # AULASEGURA-BLOCK";
+
     private const string BACKUP_EXTENSION = ".aulasegura.bak";
 
     /// <summary>
@@ -36,11 +40,11 @@ public class HostsFileManager
 
         foreach (var line in lines)
         {
-            // Si la línea ya contiene este dominio, la actualizamos
-            if (line.Contains(normalizedDomain, StringComparison.OrdinalIgnoreCase) && 
-                line.StartsWith(AULASEGURA_MARKER))
+            if (IsAulaSeguraManagedLine(line) &&
+                TryGetDomainFromManagedLine(line, out var d) &&
+                string.Equals(d, normalizedDomain, StringComparison.OrdinalIgnoreCase))
             {
-                newLines.Add($"{AULASEGURA_MARKER} {ipAddress} {normalizedDomain}");
+                newLines.Add(BuildBlockLine(ipAddress, normalizedDomain));
                 entryExists = true;
             }
             else
@@ -49,10 +53,9 @@ public class HostsFileManager
             }
         }
 
-        // Si no existía, la agregamos al final
         if (!entryExists)
         {
-            newLines.Add($"{AULASEGURA_MARKER} {ipAddress} {normalizedDomain}");
+            newLines.Add(BuildBlockLine(ipAddress, normalizedDomain));
         }
 
         await WriteAllLinesAsync(newLines);
@@ -74,12 +77,11 @@ public class HostsFileManager
 
         foreach (var line in lines)
         {
-            // Solo eliminamos líneas marcadas por AulaSegura que contengan el dominio
-            if (line.StartsWith(AULASEGURA_MARKER) && 
-                line.Contains(normalizedDomain, StringComparison.OrdinalIgnoreCase))
+            if (IsAulaSeguraManagedLine(line) &&
+                TryGetDomainFromManagedLine(line, out var d) &&
+                string.Equals(d, normalizedDomain, StringComparison.OrdinalIgnoreCase))
             {
                 removed = true;
-                // No agregamos esta línea (la eliminamos)
             }
             else
             {
@@ -103,8 +105,7 @@ public class HostsFileManager
 
         foreach (var line in lines)
         {
-            // Solo mantenemos líneas que NO sean de AulaSegura
-            if (!line.StartsWith(AULASEGURA_MARKER))
+            if (!IsAulaSeguraManagedLine(line))
             {
                 newLines.Add(line);
             }
@@ -124,14 +125,11 @@ public class HostsFileManager
 
         foreach (var line in lines)
         {
-            if (line.StartsWith(AULASEGURA_MARKER))
+            if (IsAulaSeguraManagedLine(line) &&
+                TryGetDomainFromManagedLine(line, out var d) &&
+                !string.IsNullOrEmpty(d))
             {
-                // Formato: "# AULASEGURA-BLOCK 127.0.0.1 dominio.com"
-                var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                if (parts.Length >= 3)
-                {
-                    entries.Add(parts[2]); // El dominio está en la tercera posición
-                }
+                entries.Add(d);
             }
         }
 
@@ -243,12 +241,64 @@ public class HostsFileManager
 
         foreach (var line in lines)
         {
-            if (line.StartsWith(AULASEGURA_MARKER))
+            if (IsAulaSeguraManagedLine(line))
             {
                 aulaSeguraLines.Add(line.Trim());
             }
         }
 
         return aulaSeguraLines;
+    }
+
+    private static string BuildBlockLine(string ipAddress, string normalizedDomain)
+        => $"{ipAddress}\t{normalizedDomain}{AulaseguraLineSuffix}";
+
+    /// <summary>Detecta líneas nuevas (sufijo al final) o el formato antiguo erróneo (# al inicio, ignorado por Windows).</summary>
+    private static bool IsAulaSeguraManagedLine(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+            return false;
+
+        var t = line.Trim();
+        if (t.EndsWith(AulaseguraLineSuffix, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (t.StartsWith("# AULASEGURA-BLOCK", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private static bool TryGetDomainFromManagedLine(string line, out string? domain)
+    {
+        domain = null;
+        var t = line.Trim();
+
+        if (t.EndsWith(AulaseguraLineSuffix, StringComparison.OrdinalIgnoreCase))
+        {
+            var head = t[..^AulaseguraLineSuffix.Length].TrimEnd();
+            var parts = head.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2)
+            {
+                domain = parts[1];
+                return true;
+            }
+
+            return false;
+        }
+
+        const string legacyPrefix = "# AULASEGURA-BLOCK ";
+        if (!t.StartsWith(legacyPrefix, StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        var rest = t[legacyPrefix.Length..].Trim();
+        var legacyParts = rest.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        if (legacyParts.Length >= 2)
+        {
+            domain = legacyParts[1];
+            return true;
+        }
+
+        return false;
     }
 }

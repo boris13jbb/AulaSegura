@@ -8,5 +8,6 @@
         <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <converters:BoolToStringConverter x:Key="BoolToStringConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:BoolToForegroundBrushConverter x:Key="BoolToForegroundBrushConverter"/>
     </Application.Resources>
 </Application>

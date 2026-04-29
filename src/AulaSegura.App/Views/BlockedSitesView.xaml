@@ -129,10 +129,13 @@
                                FontSize="20" 
                                FontWeight="Bold" 
                                Foreground="#424242"/>
-                    <TextBlock Text="Administre la lista de sitios web bloqueados" 
-                               FontSize="12" 
+                    <TextBlock TextWrapping="Wrap"
+                               FontSize="12"
                                Foreground="#757575"
-                               Margin="0,5,0,0"/>
+                               Margin="0,5,0,0"
+                               MaxWidth="700"
+                               LineHeight="18"
+                               Text="Si escribe www.facebook.com se guardará como facebook.com (normalizado). Para quitar la redirección local al archivo hosts el programa debe ejecutarse como administrador (o usar «Aplicar reglas» con permisos elevados). Si el servicio AulaSegura está instalado, también puede sincronizar el hosts periódicamente."/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -211,6 +214,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBox Grid.Column="0"
@@ -237,6 +241,15 @@
                         Margin="10,0,0,0"
                         Padding="16,8"
                         MinHeight="38"/>
+                <CheckBox Grid.Column="2"
+                          VerticalAlignment="Center"
+                          Margin="14,0,0,0"
+                          FontSize="12"
+                          FontWeight="SemiBold"
+                          Foreground="#424242"
+                          Content="Mostrar también desactivados"
+                          ToolTip="Muestra entradas con bloqueo desactivado (p. ej. para volver a activar sin crear duplicados)."
+                          IsChecked="{Binding ShowInactiveBlockedSites, Mode=TwoWay}"/>
             </Grid>
         </Border>
 

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using AulaSegura.Core.Entities;
 using AulaSegura.Core.Interfaces;
+using AulaSegura.Core.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -37,6 +38,10 @@ public partial class BlockedSitesViewModel : ObservableObject
 
     [ObservableProperty]
     private string _searchText = string.Empty;
+
+    /// <summary>Muestra filas con bloqueo desactivado (IsActive), para poder volver a activar sin reintroducir el dominio.</summary>
+    [ObservableProperty]
+    private bool _showInactiveBlockedSites;
 
     [ObservableProperty]
     private int _selectedCategoryId = 0;
@@ -91,7 +96,7 @@ public partial class BlockedSitesViewModel : ObservableObject
         SaveCommand = new AsyncRelayCommand(SaveSiteAsync, CanSaveSite);
         CancelCommand = new RelayCommand(HideForm);
         ApplyRulesCommand = new AsyncRelayCommand(ApplyBlockingRulesAsync);
-        SearchCommand = new RelayCommand(FilterSites);
+        SearchCommand = new AsyncRelayCommand(LoadDataAsync);
         GoBackCommand = new RelayCommand(GoBack);
         ToggleActiveCommand = new AsyncRelayCommand<BlockedSite>(ToggleActiveAsync);
 
@@ -107,7 +112,17 @@ public partial class BlockedSitesViewModel : ObservableObject
             ErrorMessage = string.Empty;
 
             // Load blocked sites
-            var sites = await _blockedSiteService.GetAllBlockedSitesAsync();
+            var sites = (await _blockedSiteService.GetAllBlockedSitesAsync(ShowInactiveBlockedSites)).ToList();
+
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var q = SearchText.Trim();
+                sites = sites
+                    .Where(s => s.Domain.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                                (s.Reason != null && s.Reason.Contains(q, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+
             BlockedSites.Clear();
             foreach (var site in sites)
             {
@@ -182,7 +197,16 @@ public partial class BlockedSitesViewModel : ObservableObject
             {
                 await _blockedSiteService.DeleteBlockedSiteAsync(site.Id);
                 await LoadDataAsync();
-                MessageBox.Show("Sitio eliminado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show(
+                    "Bloqueo desactivado y archivo hosts sincronizado (si ejecutó como administrador).\n\nSi el sitio sigue sin abrirse, ejecute la app como administrador y vuelva a intentarlo.",
+                    "Éxito",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+            }
+            catch (InvalidOperationException ex)
+            {
+                MessageBox.Show(ex.Message, "No se actualizó el archivo hosts", MessageBoxButton.OK, MessageBoxImage.Warning);
+                await LoadDataAsync();
             }
             catch (Exception ex)
             {
@@ -221,6 +245,11 @@ public partial class BlockedSitesViewModel : ObservableObject
             await _blockedSiteService.UpdateBlockedSiteAsync(updated);
             await LoadDataAsync();
         }
+        catch (InvalidOperationException ex)
+        {
+            MessageBox.Show(ex.Message, "No se actualizó el archivo hosts", MessageBoxButton.OK, MessageBoxImage.Warning);
+            await LoadDataAsync();
+        }
         catch (Exception ex)
         {
             ErrorMessage = $"Error al cambiar estado: {ex.Message}";
@@ -231,44 +260,47 @@ public partial class BlockedSitesViewModel : ObservableObject
     {
         try
         {
-            // Validation
             if (string.IsNullOrWhiteSpace(FormDomain))
             {
                 ErrorMessage = "El dominio es obligatorio.";
                 return;
             }
 
-            // Normalize domain (remove protocol, lowercase)
-            var domain = FormDomain.Trim().ToLower();
-            if (domain.StartsWith("http://") || domain.StartsWith("https://"))
+            var normalized = ValidationHelper.NormalizeDomain(FormDomain);
+            if (!ValidationHelper.IsValidDomain(normalized))
             {
-                domain = domain.Replace("http://", "").Replace("https://", "");
+                ErrorMessage = "Dominio no válido.";
+                return;
             }
-            domain = domain.TrimEnd('/');
 
             if (IsEditMode && EditingSiteId.HasValue)
             {
-                // Update existing site
-                var site = new BlockedSite
+                var previous = await _blockedSiteService.GetBlockedSiteByIdAsync(EditingSiteId.Value);
+
+                await _blockedSiteService.UpdateBlockedSiteAsync(new BlockedSite
                 {
                     Id = EditingSiteId.Value,
-                    Domain = domain,
+                    Domain = normalized,
                     Reason = FormReason,
                     CategoryId = FormCategoryId,
-                    IsActive = true
-                };
+                    IsActive = previous?.IsActive ?? true,
+                    BlockSubdomains = previous?.BlockSubdomains ?? true
+                });
 
-                await _blockedSiteService.UpdateBlockedSiteAsync(site);
-                MessageBox.Show("Sitio actualizado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Sitio actualizado correctamente. El archivo hosts se ha sincronizado si tiene permisos de administrador.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                // Add new site
-                await _blockedSiteService.AddBlockedSiteAsync(domain, FormCategoryId, FormReason, _currentAdminId);
-                MessageBox.Show("Sitio agregado o reactivado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                await _blockedSiteService.AddBlockedSiteAsync(normalized, FormCategoryId, FormReason, _currentAdminId);
+                MessageBox.Show("Sitio agregado o reactivado correctamente. El archivo hosts se ha sincronizado si tiene permisos de administrador.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             HideForm();
+            await LoadDataAsync();
+        }
+        catch (InvalidOperationException ex)
+        {
+            MessageBox.Show(ex.Message, "No se actualizó el archivo hosts", MessageBoxButton.OK, MessageBoxImage.Warning);
             await LoadDataAsync();
         }
         catch (Exception ex)
@@ -327,26 +359,9 @@ public partial class BlockedSitesViewModel : ObservableObject
         }
     }
 
-    private void FilterSites()
+    partial void OnShowInactiveBlockedSitesChanged(bool value)
     {
-        // Simple client-side filtering
-        // In production, this should use database queries
-        if (string.IsNullOrWhiteSpace(SearchText))
-        {
-            _ = LoadDataAsync();
-            return;
-        }
-
-        var filtered = BlockedSites
-            .Where(s => s.Domain.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                       (s.Reason != null && s.Reason.Contains(SearchText, StringComparison.OrdinalIgnoreCase)))
-            .ToList();
-
-        BlockedSites.Clear();
-        foreach (var site in filtered)
-        {
-            BlockedSites.Add(site);
-        }
+        _ = LoadDataAsync();
     }
 
     partial void OnFormDomainChanged(string value)

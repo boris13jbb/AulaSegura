@@ -44,13 +44,15 @@ public partial class MainWindow : Window
         var allowedSiteService = _serviceProvider.GetRequiredService<IAllowedSiteService>();
         var categoryService = _serviceProvider.GetRequiredService<ICategoryService>();
         var activityLogService = _serviceProvider.GetRequiredService<IActivityLogService>();
-        
+        var hostsFileProbe = _serviceProvider.GetRequiredService<IHostsFileAccessProbe>();
+
         var viewModel = new DashboardViewModel(
             _currentAdmin,
             blockedSiteService,
             allowedSiteService,
             categoryService,
-            activityLogService);
+            activityLogService,
+            hostsFileProbe);
         
         // Set the MainWindow reference BEFORE creating the view
         viewModel.SetParentWindow(this);

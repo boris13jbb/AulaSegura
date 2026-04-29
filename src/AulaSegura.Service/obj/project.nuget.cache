@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "XCz0DkzVwAI=",
+  "dgSpecHash": "vOpoC+QESaQ=",
   "success": true,
-  "projectFilePath": "d:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj",
+  "projectFilePath": "D:\\APKICATIVO DE CONTROL DE PAGINAS\\AulaSegura\\src\\AulaSegura.Service\\AulaSegura.Service.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\BRS\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\BRS\\.nuget\\packages\\microsoft.data.sqlite.core\\8.0.11\\microsoft.data.sqlite.core.8.0.11.nupkg.sha512",

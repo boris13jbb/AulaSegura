@@ -21,7 +21,7 @@ public class AllowedSiteService : IAllowedSiteService
     {
         var site = new AllowedSite
         {
-            Domain = domain.ToLower().Trim(),
+            Domain = ValidationHelper.NormalizeDomain(domain),
             Description = description,
             CreatedByAdminId = adminId,
             IsActive = true
@@ -69,7 +69,11 @@ public class AllowedSiteService : IAllowedSiteService
 
     public async Task<bool> IsDomainAllowedAsync(string domain)
     {
-        return await _context.AllowedSites.AnyAsync(a => 
-            a.Domain.Equals(domain.ToLower().Trim(), StringComparison.OrdinalIgnoreCase) && a.IsActive);
+        var normalized = ValidationHelper.NormalizeDomain(domain);
+        if (string.IsNullOrEmpty(normalized))
+            return false;
+
+        return await _context.AllowedSites.AnyAsync(a =>
+            a.Domain == normalized && a.IsActive);
     }
 }

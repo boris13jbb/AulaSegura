@@ -39,6 +39,8 @@ public static class InfrastructureConfiguration
         services.AddScoped<IBlockingRuleService, BlockingRuleService>();
         services.AddScoped<IReportService, ReportService>();
 
+        services.AddSingleton<IHostsFileAccessProbe, HostsFileAccessProbe>();
+
         return services;
     }
 
