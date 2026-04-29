@@ -36,9 +36,30 @@ public class BlockedSiteService : IBlockedSiteService
         if (!ValidationHelper.IsValidDomain(normalizedDomain))
             throw new ArgumentException($"Dominio inválido: {domain}");
 
-        // Verificar duplicados
+        // Duplicado activo
         if (await _context.BlockedSites.AnyAsync(b => b.Domain == normalizedDomain && b.IsActive))
             throw new InvalidOperationException($"El dominio {normalizedDomain} ya está bloqueado");
+
+        // Mismo dominio pero registro desactivado ("eliminado"): reactivar fila existente (Domain es único en BD)
+        var inactive = await _context.BlockedSites.FirstOrDefaultAsync(b => b.Domain == normalizedDomain && !b.IsActive);
+        if (inactive != null)
+        {
+            inactive.IsActive = true;
+            inactive.CategoryId = categoryId;
+            inactive.Reason = reason;
+            inactive.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            await _activityLogService.LogActivityAsync(
+                SystemConstants.LogActions.UpdateBlockedSite,
+                $"Sitio reactivado en lista negra: {normalizedDomain}",
+                "BlockedSite",
+                inactive.Id,
+                adminId,
+                true);
+
+            return inactive;
+        }
 
         var blockedSite = new BlockedSite
         {

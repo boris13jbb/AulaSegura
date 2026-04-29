@@ -217,7 +217,7 @@ public partial class BlockedSitesViewModel : ObservableObject
             {
                 // Add new site
                 await _blockedSiteService.AddBlockedSiteAsync(domain, FormCategoryId, FormReason, _currentAdminId);
-                MessageBox.Show("Sitio agregado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Sitio agregado o reactivado correctamente.", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
             }
 
             HideForm();
