@@ -75,6 +75,7 @@ public partial class BlockedSitesViewModel : ObservableObject
     public ICommand ApplyRulesCommand { get; }
     public ICommand SearchCommand { get; }
     public ICommand GoBackCommand { get; }
+    public IAsyncRelayCommand<BlockedSite> ToggleActiveCommand { get; }
 
     public BlockedSitesViewModel(
         IBlockedSiteService blockedSiteService,
@@ -92,6 +93,7 @@ public partial class BlockedSitesViewModel : ObservableObject
         ApplyRulesCommand = new AsyncRelayCommand(ApplyBlockingRulesAsync);
         SearchCommand = new RelayCommand(FilterSites);
         GoBackCommand = new RelayCommand(GoBack);
+        ToggleActiveCommand = new AsyncRelayCommand<BlockedSite>(ToggleActiveAsync);
 
         // Load initial data
         _ = LoadDataAsync();
@@ -119,6 +121,14 @@ public partial class BlockedSitesViewModel : ObservableObject
             {
                 Categories.Add(category);
             }
+
+            // Si el usuario abrió "Agregar sitio" antes de que llegaran las categorías, FormCategoryId queda en 0 y Guardar queda deshabilitado sin motivo visible.
+            if (IsFormVisible && !IsEditMode && Categories.Count > 0 && FormCategoryId <= 0)
+            {
+                FormCategoryId = Categories[0].Id;
+            }
+
+            ((AsyncRelayCommand)SaveCommand).NotifyCanExecuteChanged();
         }
         catch (Exception ex)
         {
@@ -136,9 +146,11 @@ public partial class BlockedSitesViewModel : ObservableObject
         EditingSiteId = null;
         FormDomain = string.Empty;
         FormReason = string.Empty;
-        FormCategoryId = Categories.Any() ? Categories.First().Id : 0;
+        FormCategoryId = Categories.Count > 0 ? Categories[0].Id : 0;
         IsFormVisible = true;
         ErrorMessage = string.Empty;
+
+        ((AsyncRelayCommand)SaveCommand).NotifyCanExecuteChanged();
     }
 
     private async Task EditSiteAsync(BlockedSite? site)
@@ -176,6 +188,42 @@ public partial class BlockedSitesViewModel : ObservableObject
             {
                 ErrorMessage = $"Error al eliminar: {ex.Message}";
             }
+        }
+    }
+
+    /// <summary>
+    /// Activa o desactiva el bloqueo del sitio (IsActive). La lista habitual solo muestra activos.
+    /// </summary>
+    private async Task ToggleActiveAsync(BlockedSite? site)
+    {
+        if (site == null) return;
+
+        try
+        {
+            var toggledOff = site.IsActive;
+            var prompt = toggledOff
+                ? $"¿Desactivar el bloqueo de «{site.Domain}»?\n\nEl dominio desaparecerá de esta lista hasta que lo vuelva a agregar o reactivar (mismo nombre de dominio)."
+                : $"¿Volver a activar el bloqueo de «{site.Domain}»?";
+
+            if (MessageBox.Show(prompt, "Cambiar estado", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+
+            var updated = new BlockedSite
+            {
+                Id = site.Id,
+                Domain = site.Domain,
+                Reason = site.Reason ?? string.Empty,
+                CategoryId = site.CategoryId,
+                BlockSubdomains = site.BlockSubdomains,
+                IsActive = !site.IsActive,
+            };
+
+            await _blockedSiteService.UpdateBlockedSiteAsync(updated);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al cambiar estado: {ex.Message}";
         }
     }
 

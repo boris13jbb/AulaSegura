@@ -87,6 +87,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -204,15 +205,19 @@
             </StackPanel>
         </Border>
 
-        <!-- Search and Filters -->
-        <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,15">
-            <Grid>
+        <!-- Search (fila compacta; el * debe estar en la tabla, no aquí) -->
+        <Border Grid.Row="3" Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+            <Grid VerticalAlignment="Top">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBox Grid.Column="0"
+                         VerticalAlignment="Center"
+                         VerticalContentAlignment="Center"
+                         MinHeight="38"
+                         MaxHeight="40"
                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                          Padding="10,8"
                          FontSize="13"
@@ -225,16 +230,18 @@
                 </TextBox>
 
                 <Button Grid.Column="1"
+                        VerticalAlignment="Center"
                         Content="🔍 Buscar"
                         Command="{Binding SearchCommand}"
                         Style="{StaticResource PrimaryButtonStyle}"
                         Margin="10,0,0,0"
-                        Padding="20,8"/>
+                        Padding="16,8"
+                        MinHeight="38"/>
             </Grid>
         </Border>
 
         <!-- DataGrid -->
-        <Border Grid.Row="4" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+        <Border Grid.Row="4" Background="White" CornerRadius="8" Padding="15" Margin="0,0,0,10" VerticalAlignment="Stretch">
             <DataGrid ItemsSource="{Binding BlockedSites}"
                       SelectedItem="{Binding SelectedSite}"
                       AutoGenerateColumns="False"
@@ -245,7 +252,10 @@
                       HeadersVisibility="Column"
                       RowBackground="White"
                       AlternatingRowBackground="#FAFAFA"
-                      FontSize="13">
+                      FontSize="13"
+                      VerticalAlignment="Stretch"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
                 
                 <DataGrid.Columns>
                     <!-- Domain Column -->
@@ -285,13 +295,24 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <!-- Status Column -->
-                    <DataGridTemplateColumn Header="Estado" Width="100">
+                    <!-- Estado: texto + acción para activar/desactivar (antes solo era lectura) -->
+                    <DataGridTemplateColumn Header="Estado" Width="200">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding IsActive, Converter={StaticResource BoolToStringConverter}, ConverterParameter='✅ Activo|❌ Inactivo'}"
-                                          VerticalAlignment="Center"
-                                          Padding="5,0"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding IsActive, Converter={StaticResource BoolToStringConverter}, ConverterParameter='✅ Activo|❌ Inactivo'}"
+                                               VerticalAlignment="Center"
+                                               Padding="5,0,8,0"/>
+                                    <Button Content="{Binding IsActive, Converter={StaticResource BoolToStringConverter}, ConverterParameter='⏸️ Desactivar|▶️ Activar'}"
+                                            Command="{Binding DataContext.ToggleActiveCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"
+                                            Background="#9C27B0"
+                                            Foreground="White"
+                                            Padding="8,5"
+                                            BorderThickness="0"
+                                            Cursor="Hand"
+                                            FontSize="11"/>
+                                </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
