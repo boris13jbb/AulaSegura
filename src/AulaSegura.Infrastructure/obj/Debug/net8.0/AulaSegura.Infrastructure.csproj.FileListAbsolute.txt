@@ -17,3 +17,4 @@ D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Infrastructure\obj
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Infrastructure\obj\Debug\net8.0\AulaSegura.Infrastructure.pdb
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Infrastructure\obj\Debug\net8.0\AulaSegura.Infrastructure.genruntimeconfig.cache
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Infrastructure\obj\Debug\net8.0\ref\AulaSegura.Infrastructure.dll
+D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Infrastructure\obj\Debug\net8.0\AulaSegura.Infrastructure.sourcelink.json

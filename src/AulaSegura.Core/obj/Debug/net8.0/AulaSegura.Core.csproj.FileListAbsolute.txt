@@ -10,3 +10,4 @@ D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Core\obj\Debug\net
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Core\obj\Debug\net8.0\refint\AulaSegura.Core.dll
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Core\obj\Debug\net8.0\AulaSegura.Core.pdb
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Core\obj\Debug\net8.0\ref\AulaSegura.Core.dll
+D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Core\obj\Debug\net8.0\AulaSegura.Core.sourcelink.json

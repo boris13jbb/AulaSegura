@@ -226,7 +226,7 @@
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                                     <Button Content="✏️ Editar"
-                                           Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                            CommandParameter="{Binding}"
                                            Background="#FF9800"
                                            Foreground="White"
@@ -236,7 +236,7 @@
                                            Cursor="Hand"
                                            FontSize="11"/>
                                     <Button Content="🗑️ Eliminar"
-                                           Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                            CommandParameter="{Binding}"
                                            Background="#F44336"
                                            Foreground="White"

@@ -130,3 +130,4 @@ D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.App\obj\Debug\net8
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.App\obj\Debug\net8.0-windows\Views\ReportsView.baml
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.App\obj\Debug\net8.0-windows\Views\BlockingRulesView.g.cs
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.App\obj\Debug\net8.0-windows\Views\ReportsView.g.cs
+D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.App\obj\Debug\net8.0-windows\AulaSegura.App.sourcelink.json

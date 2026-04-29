@@ -212,7 +212,7 @@
 
                                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                                         <Button Content="✏️ Editar"
-                                                Command="{Binding DataContext.EditKeywordCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                Command="{Binding DataContext.EditKeywordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 Background="#FF9800"
                                                 Foreground="White"
@@ -222,7 +222,7 @@
                                                 FontSize="11"
                                                 Margin="0,0,8,0"/>
                                         <Button Content="🗑️ Eliminar"
-                                                Command="{Binding DataContext.DeleteKeywordCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                Command="{Binding DataContext.DeleteKeywordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                 CommandParameter="{Binding}"
                                                 Background="#F44336"
                                                 Foreground="White"

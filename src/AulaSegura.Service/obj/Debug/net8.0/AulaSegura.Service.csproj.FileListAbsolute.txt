@@ -92,3 +92,4 @@ D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Service\obj\Debug\
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Service\obj\Debug\net8.0\AulaSegura.Service.genruntimeconfig.cache
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Service\obj\Debug\net8.0\ref\AulaSegura.Service.dll
 D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Service\bin\Debug\net8.0\appsettings.example.json
+D:\APKICATIVO DE CONTROL DE PAGINAS\AulaSegura\src\AulaSegura.Service\obj\Debug\net8.0\AulaSegura.Service.sourcelink.json
