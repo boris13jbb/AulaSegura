@@ -2,10 +2,15 @@
 bin/
 obj/
 dist/
+**/bin/
+**/obj/
+scripts/dist/
 
 # User/IDE
 .vs/
 .vscode/
+.idea/
+.lingma/
 *.user
 *.suo
 *.userosscache
@@ -13,11 +18,24 @@ dist/
 
 # Logs
 *.log
+Logs/
+debug-startup.log
+startup-error.log
 
 # SQLite local database artifacts (do not commit)
 *.db
 *.db-wal
 *.db-shm
+
+# Local configuration and generated runtime files
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+Backups/
+**/Backups/
+Reporte_*.csv
+first-run-admin.txt
 
 # OS
 Thumbs.db

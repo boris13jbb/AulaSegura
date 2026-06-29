@@ -3,69 +3,97 @@ using System.Text.RegularExpressions;
 namespace AulaSegura.Core.Utilities;
 
 /// <summary>
-/// Utilidades para validación y manipulación de datos
+/// Utilidades para validacion y normalizacion de datos de entrada.
 /// </summary>
 public static class ValidationHelper
 {
     /// <summary>
-    /// Valida si un dominio tiene un formato válido
+    /// Valida si un dominio tiene un formato valido.
     /// </summary>
     public static bool IsValidDomain(string domain)
     {
-        if (string.IsNullOrWhiteSpace(domain))
+        var normalizedDomain = NormalizeDomain(domain);
+
+        if (string.IsNullOrWhiteSpace(normalizedDomain) || normalizedDomain.Length > 253)
             return false;
 
-        // Eliminar protocolo si existe
-        domain = domain.Replace("http://", "").Replace("https://", "").Replace("www.", "");
-        
-        // Eliminar path si existe
-        var pathIndex = domain.IndexOf('/');
-        if (pathIndex > 0)
-            domain = domain.Substring(0, pathIndex);
+        var labels = normalizedDomain.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        if (labels.Length < 2)
+            return false;
 
-        // Patrón básico de validación de dominio
-        var pattern = @"^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$";
-        return Regex.IsMatch(domain, pattern);
+        foreach (var label in labels)
+        {
+            if (label.Length is < 1 or > 63)
+                return false;
+
+            if (label.StartsWith('-') || label.EndsWith('-'))
+                return false;
+
+            if (!Regex.IsMatch(label, "^[a-z0-9-]+$", RegexOptions.IgnoreCase))
+                return false;
+        }
+
+        return !labels[^1].All(char.IsDigit);
     }
 
     /// <summary>
-    /// Normaliza un dominio (minúsculas, sin espacios, sin protocolo)
+    /// Normaliza un dominio: minusculas, sin protocolo, sin puerto, sin ruta y sin www inicial.
     /// </summary>
     public static string NormalizeDomain(string domain)
     {
         if (string.IsNullOrWhiteSpace(domain))
             return string.Empty;
 
-        domain = domain.Trim().ToLowerInvariant();
-        domain = domain.Replace("http://", "").Replace("https://", "").Replace("www.", "");
-        
-        var pathIndex = domain.IndexOf('/');
-        if (pathIndex > 0)
-            domain = domain.Substring(0, pathIndex);
+        var candidate = domain.Trim();
 
-        return domain;
+        if (!candidate.Contains("://", StringComparison.Ordinal))
+        {
+            candidate = $"http://{candidate}";
+        }
+
+        if (Uri.TryCreate(candidate, UriKind.Absolute, out var uri) && !string.IsNullOrWhiteSpace(uri.Host))
+        {
+            candidate = uri.Host;
+        }
+        else
+        {
+            var endIndex = candidate.IndexOfAny(['/', '?', '#']);
+            if (endIndex >= 0)
+                candidate = candidate[..endIndex];
+
+            var portIndex = candidate.LastIndexOf(':');
+            if (portIndex > -1)
+                candidate = candidate[..portIndex];
+        }
+
+        candidate = candidate.Trim().Trim('.').ToLowerInvariant();
+
+        if (candidate.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            candidate = candidate[4..];
+
+        return candidate;
     }
 
     /// <summary>
-    /// Valida fortaleza de contraseña
+    /// Valida la fortaleza minima de una contrasena.
     /// </summary>
     public static (bool IsValid, string Message) ValidatePassword(string password)
     {
         if (string.IsNullOrWhiteSpace(password))
-            return (false, "La contraseña no puede estar vacía");
+            return (false, "La contrasena no puede estar vacia");
 
         if (password.Length < 8)
-            return (false, "La contraseña debe tener al menos 8 caracteres");
+            return (false, "La contrasena debe tener al menos 8 caracteres");
 
         if (!Regex.IsMatch(password, @"[A-Z]"))
-            return (false, "La contraseña debe contener al menos una letra mayúscula");
+            return (false, "La contrasena debe contener al menos una letra mayuscula");
 
         if (!Regex.IsMatch(password, @"[a-z]"))
-            return (false, "La contraseña debe contener al menos una letra minúscula");
+            return (false, "La contrasena debe contener al menos una letra minuscula");
 
         if (!Regex.IsMatch(password, @"\d"))
-            return (false, "La contraseña debe contener al menos un número");
+            return (false, "La contrasena debe contener al menos un numero");
 
-        return (true, "Contraseña válida");
+        return (true, "Contrasena valida");
     }
 }

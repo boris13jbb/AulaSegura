@@ -188,10 +188,10 @@ Este paquete contiene todos los archivos necesarios para instalar AulaSegura Con
    .\AulaSegura.App.exe
    ```
 
-## 🔑 Credenciales por Defecto
+## 🔑 Credenciales Iniciales
 
 - **Usuario:** admin
-- **Contraseña:** Admin@123
+- **Contraseña:** configure `SeedAdmin__Password` antes del primer inicio o revise `first-run-admin.txt`
 - ⚠️ **IMPORTANTE:** Cambiar la contraseña en el primer inicio de sesión
 
 ## 📁 Estructura de Carpetas
@@ -320,9 +320,9 @@ Write-Host "====================================================================
 Write-Host "                   INSTALACIÓN COMPLETADA" -ForegroundColor Cyan
 Write-Host "========================================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Credenciales:" -ForegroundColor Yellow
-Write-Host "  Usuario: admin" -ForegroundColor White
-Write-Host "  Contraseña: Admin@123" -ForegroundColor White
+Write-Host "Credenciales iniciales:" -ForegroundColor Yellow
+Write-Host "  Usuario: admin (configurable con SeedAdmin__Username)" -ForegroundColor White
+Write-Host "  Contraseña: use SeedAdmin__Password o revise first-run-admin.txt tras el primer inicio" -ForegroundColor White
 Write-Host ""
 Write-Host "Para iniciar la aplicación:" -ForegroundColor Yellow
 Write-Host "  1. Abra la carpeta 'App'" -ForegroundColor White

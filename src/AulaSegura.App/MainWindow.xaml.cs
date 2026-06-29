@@ -44,6 +44,7 @@ public partial class MainWindow : Window
         var allowedSiteService = _serviceProvider.GetRequiredService<IAllowedSiteService>();
         var categoryService = _serviceProvider.GetRequiredService<ICategoryService>();
         var activityLogService = _serviceProvider.GetRequiredService<IActivityLogService>();
+        var settingsService = _serviceProvider.GetRequiredService<ISettingsService>();
         var hostsFileProbe = _serviceProvider.GetRequiredService<IHostsFileAccessProbe>();
 
         var viewModel = new DashboardViewModel(
@@ -52,6 +53,7 @@ public partial class MainWindow : Window
             allowedSiteService,
             categoryService,
             activityLogService,
+            settingsService,
             hostsFileProbe);
         
         // Set the MainWindow reference BEFORE creating the view
@@ -87,6 +89,7 @@ public partial class MainWindow : Window
             
             // Set the MainWindow reference
             viewModel.SetParentWindow(this);
+            viewModel.SetCurrentAdminId(_currentAdmin.Id);
             
             var view = new BlockedSitesView
             {
@@ -116,10 +119,12 @@ public partial class MainWindow : Window
         try
         {
             var viewModel = new AllowedSitesViewModel(
-                _serviceProvider.GetRequiredService<IAllowedSiteService>());
+                _serviceProvider.GetRequiredService<IAllowedSiteService>(),
+                _serviceProvider.GetRequiredService<IBlockedSiteService>());
             
             // Set the MainWindow reference
             viewModel.SetParentWindow(this);
+            viewModel.SetCurrentAdminId(_currentAdmin.Id);
             
             var view = new AllowedSitesView
             {
@@ -221,6 +226,7 @@ public partial class MainWindow : Window
             
             // Set the MainWindow reference
             viewModel.SetParentWindow(this);
+            viewModel.SetCurrentAdminId(_currentAdmin.Id);
             
             var view = new SettingsView
             {

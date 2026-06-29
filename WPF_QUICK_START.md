@@ -28,7 +28,7 @@
 4. **Login Credentials**
    ```
    Username: admin
-   Password: Admin@123
+   Password: SeedAdmin__Password o first-run-admin.txt
    ```
 
 ---
@@ -73,7 +73,7 @@ dotnet publish src/AulaSegura.App/AulaSegura.App.csproj -c Release -o publish/ap
 
 ### Valid Login
 1. Enter username: `admin`
-2. Enter password: `Admin@123`
+2. Enter password: `SeedAdmin__Password o first-run-admin.txt`
 3. Click "Iniciar Sesión" button
 4. Should see dashboard with success message
 

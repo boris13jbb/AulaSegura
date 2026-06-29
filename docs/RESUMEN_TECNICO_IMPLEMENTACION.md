@@ -156,7 +156,7 @@ dotnet ef database update --startup-project ..\AulaSegura.Service\AulaSegura.Ser
 
 #### 1.3 Crear Seed Data
 Crear clase `DatabaseSeeder` con:
-- Administrador por defecto (username: admin, password: Admin@123)
+- Administrador por defecto (username: admin, password: SeedAdmin__Password o first-run-admin.txt)
 - Categorías predefinidas (Adultos, Redes Sociales, Videojuegos, Apuestas, etc.)
 - Configuración inicial del sistema
 
@@ -172,7 +172,7 @@ public static class DatabaseSeeder
             var admin = new Administrator
             {
                 Username = "admin",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("SeedAdmin__Password o first-run-admin.txt"),
                 Email = "admin@aulasegura.local",
                 FullName = "Administrador Principal",
                 IsActive = true

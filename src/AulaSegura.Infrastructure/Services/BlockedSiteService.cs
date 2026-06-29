@@ -95,7 +95,19 @@ public class BlockedSiteService : IBlockedSiteService
         if (existing == null)
             throw new InvalidOperationException("Sitio no encontrado");
 
-        existing.Domain = ValidationHelper.NormalizeDomain(site.Domain);
+        var normalizedDomain = ValidationHelper.NormalizeDomain(site.Domain);
+        if (!ValidationHelper.IsValidDomain(normalizedDomain))
+            throw new ArgumentException($"Dominio invalido: {site.Domain}", nameof(site));
+
+        var duplicate = await _context.BlockedSites.AnyAsync(b =>
+            b.Id != site.Id &&
+            b.Domain == normalizedDomain &&
+            b.IsActive);
+
+        if (duplicate)
+            throw new InvalidOperationException($"El dominio {normalizedDomain} ya esta bloqueado");
+
+        existing.Domain = normalizedDomain;
         existing.CategoryId = site.CategoryId;
         existing.Reason = site.Reason;
         existing.BlockSubdomains = site.BlockSubdomains;

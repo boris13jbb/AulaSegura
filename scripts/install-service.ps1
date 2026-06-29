@@ -260,10 +260,10 @@ Write-Host "  - Data: $dataDir" -ForegroundColor White
 Write-Host "  - Logs: $logsDir" -ForegroundColor White
 Write-Host "  - Backups: $backupsDir" -ForegroundColor White
 Write-Host ""
-Write-Host "Credenciales por defecto:" -ForegroundColor Yellow
-Write-Host "  Usuario: admin" -ForegroundColor White
-Write-Host "  Contraseña: Admin@123" -ForegroundColor White
-Write-Host "  ¡CAMBIE LA CONTRASEÑA EN EL PRIMER INICIO DE SESIÓN!" -ForegroundColor Red
+Write-Host "Credenciales iniciales:" -ForegroundColor Yellow
+Write-Host "  Usuario: admin (configurable con SeedAdmin__Username)" -ForegroundColor White
+Write-Host "  Contraseña: use SeedAdmin__Password o revise first-run-admin.txt tras el primer inicio" -ForegroundColor White
+Write-Host "  Cambie la contraseña en el primer inicio de sesión." -ForegroundColor Red
 Write-Host ""
 Write-Host "Comandos útiles:" -ForegroundColor Yellow
 Write-Host "  Ver estado: Get-Service -Name $ServiceName" -ForegroundColor White

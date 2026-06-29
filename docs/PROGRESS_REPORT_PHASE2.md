@@ -14,7 +14,7 @@
 - ✅ Automatic database creation with `EnsureCreatedAsync()`
 - ✅ Default administrator account creation
   - Username: `admin`
-  - Password: `Admin@123` (BCrypt hashed, work factor 11)
+  - Password: `SeedAdmin__Password o first-run-admin.txt` (BCrypt hashed, work factor 11)
   - Email: `admin@aulasegura.local`
   - Full Name: `Administrador Principal`
   
@@ -332,7 +332,7 @@ Get-Content ..\src\AulaSegura.Service\Logs\aulasegura-*.log -Tail 50
 #### 4. Access the Application
 Once WPF app is implemented:
 - Launch `AulaSegura.App.exe`
-- Login with: `admin` / `Admin@123`
+- Login with: `admin` / `SeedAdmin__Password o first-run-admin.txt`
 - **Change password immediately!**
 
 ---

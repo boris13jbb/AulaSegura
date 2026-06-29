@@ -5,7 +5,7 @@ using AulaSegura.Infrastructure;
 namespace AulaSegura.Service;
 
 /// <summary>
-/// Worker principal del servicio Windows que monitorea y aplica reglas de bloqueo
+/// Worker principal del servicio Windows que monitorea y aplica reglas de bloqueo.
 /// </summary>
 public class BlockingWorker : BackgroundService
 {
@@ -29,126 +29,81 @@ public class BlockingWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("=== AulaSegura Control Web Service Iniciado ===");
-        _logger.LogInformation("Versión: 1.0.0");
+        _logger.LogInformation("=== AulaSegura Control Web Service iniciado ===");
+        _logger.LogInformation("Version: 1.0.0");
         _logger.LogInformation("Framework: .NET {Version}", Environment.Version);
 
         try
         {
-            // Inicializar base de datos con seed data
             await InitializeDatabaseAsync();
 
-            using var scope = _serviceProvider.CreateScope();
-            var blockedSiteService = scope.ServiceProvider.GetRequiredService<IBlockedSiteService>();
-            var activityLogService = scope.ServiceProvider.GetRequiredService<IActivityLogService>();
-            var settingsService = scope.ServiceProvider.GetRequiredService<ISettingsService>();
-            var reportService = scope.ServiceProvider.GetRequiredService<IReportService>();
-
-            // Registrar inicio del servicio
-            await activityLogService.LogActivityAsync(
+            await LogSystemActivityAsync(
                 SystemConstants.LogActions.ServiceStarted,
                 "Servicio de bloqueo web iniciado correctamente",
-                "System",
-                null,
-                null,
                 true);
 
-            _logger.LogInformation("Base de datos inicializada correctamente");
-
-            // Iniciar servidor de página de bloqueo
             await StartBlockingPageServerAsync();
 
-            // Aplicar reglas de bloqueo iniciales
             _logger.LogInformation("Aplicando reglas de bloqueo iniciales...");
-            await blockedSiteService.ApplyBlockingRulesAsync();
+            await ApplyBlockingRulesOnceAsync();
             _logger.LogInformation("Reglas de bloqueo aplicadas exitosamente");
 
-            // Obtener intervalo de verificación desde configuración (default: 60 segundos)
-            var checkIntervalSeconds = _configuration.GetValue<int>("AppSettings:CheckBlockingRulesIntervalSeconds", 60);
-            _logger.LogInformation("Intervalo de verificación: {Interval} segundos", checkIntervalSeconds);
+            var checkIntervalSeconds = Math.Max(
+                5,
+                _configuration.GetValue("AppSettings:CheckBlockingRulesIntervalSeconds", 60));
+            _logger.LogInformation("Intervalo de verificacion: {Interval} segundos", checkIntervalSeconds);
 
-            // Ciclo principal de monitoreo
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    // Verificar y aplicar cambios en las reglas de bloqueo
-                    await blockedSiteService.ApplyBlockingRulesAsync();
-                    
-                    // Mantenimiento: Limpiar reportes antiguos (cada 24 horas aprox)
+                    await ApplyBlockingRulesOnceAsync();
+
                     if (DateTime.Now.Hour == 3 && DateTime.Now.Minute < 10)
                     {
-                        await reportService.DeleteOldReportsAsync(90);
+                        await DeleteOldReportsAsync(90);
                         _logger.LogInformation("Mantenimiento de reportes completado.");
                     }
-                    
+
                     _logger.LogDebug("Reglas de bloqueo verificadas y aplicadas - {Time}", DateTime.Now);
-                    
-                    // Esperar el intervalo configurado
+
                     await Task.Delay(TimeSpan.FromSeconds(checkIntervalSeconds), stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
-                    // Cancelación normal del servicio
-                    _logger.LogInformation("Servicio detenido por solicitud de cancelación");
+                    _logger.LogInformation("Servicio detenido por solicitud de cancelacion");
                     break;
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    _logger.LogError(ex, "Error de permisos al aplicar reglas de bloqueo. Verifique que el servicio se ejecute como administrador.");
-                    
-                    await activityLogService.LogActivityAsync(
-                        "BLOCKING_ERROR",
-                        $"Error de permisos: {ex.Message}",
-                        "System",
-                        null,
-                        null,
-                        false);
-
-                    // Esperar antes de reintentar
+                    _logger.LogError(ex, "Error de permisos al aplicar reglas de bloqueo.");
+                    await LogBlockingErrorAsync("Error de permisos al aplicar reglas de bloqueo.");
                     await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error inesperado en el ciclo de bloqueo");
-                    
-                    await activityLogService.LogActivityAsync(
-                        "BLOCKING_ERROR",
-                        $"Error en ciclo de bloqueo: {ex.Message}",
-                        "System",
-                        null,
-                        null,
-                        false);
-
-                    // Esperar antes de reintentar para evitar loops de error
+                    await LogBlockingErrorAsync("Error inesperado en el ciclo de bloqueo.");
                     await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
                 }
             }
 
-            // Registrar detención del servicio
-            await activityLogService.LogActivityAsync(
+            await LogSystemActivityAsync(
                 SystemConstants.LogActions.ServiceStopped,
                 "Servicio de bloqueo web detenido",
-                "System",
-                null,
-                null,
                 true);
 
-            // Detener servidor de página de bloqueo
             StopBlockingPageServer();
 
-            _logger.LogInformation("=== AulaSegura Control Web Service Detenido ===");
+            _logger.LogInformation("=== AulaSegura Control Web Service detenido ===");
         }
         catch (Exception ex)
         {
-            _logger.LogCritical(ex, "Error crítico en el servicio de bloqueo");
+            _logger.LogCritical(ex, "Error critico en el servicio de bloqueo");
             throw;
         }
     }
 
-    /// <summary>
-    /// Inicializa la base de datos y crea datos semilla
-    /// </summary>
     private async Task InitializeDatabaseAsync()
     {
         try
@@ -164,52 +119,71 @@ public class BlockingWorker : BackgroundService
         }
     }
 
-    /// <summary>
-    /// Inicia el servidor HTTP de página de bloqueo
-    /// </summary>
+    private async Task ApplyBlockingRulesOnceAsync()
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var blockedSiteService = scope.ServiceProvider.GetRequiredService<IBlockedSiteService>();
+        await blockedSiteService.ApplyBlockingRulesAsync();
+    }
+
+    private async Task DeleteOldReportsAsync(int retentionDays)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var reportService = scope.ServiceProvider.GetRequiredService<IReportService>();
+        await reportService.DeleteOldReportsAsync(retentionDays);
+    }
+
+    private async Task LogSystemActivityAsync(string action, string description, bool success)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var activityLogService = scope.ServiceProvider.GetRequiredService<IActivityLogService>();
+        await activityLogService.LogActivityAsync(action, description, "System", null, null, success);
+    }
+
+    private async Task LogBlockingErrorAsync(string description)
+    {
+        await LogSystemActivityAsync("BLOCKING_ERROR", description, false);
+    }
+
     private async Task StartBlockingPageServerAsync()
     {
         try
         {
             var blockingPagePath = Path.Combine(AppContext.BaseDirectory, "blocking-page.html");
-            
+
             if (!File.Exists(blockingPagePath))
             {
-                _logger.LogWarning("Archivo de página de bloqueo no encontrado en: {Path}", blockingPagePath);
-                _logger.LogWarning("El servidor de bloqueo no se iniciará. Los usuarios no verán página de bloqueo personalizada.");
+                _logger.LogWarning("Archivo de pagina de bloqueo no encontrado en: {Path}", blockingPagePath);
+                _logger.LogWarning("El servidor de bloqueo no se iniciara.");
                 return;
             }
 
-            var port = _configuration.GetValue<int>("AppSettings:BlockingPagePort", 8080);
+            var port = _configuration.GetValue("AppSettings:BlockingPagePort", 8080);
             _blockingPageServer = new BlockingPageServer(
                 _loggerFactory.CreateLogger<BlockingPageServer>(),
                 blockingPagePath,
                 port);
 
             await _blockingPageServer.StartAsync();
-            _logger.LogInformation("Servidor de página de bloqueo iniciado en puerto {Port}", port);
+            _logger.LogInformation("Servidor de pagina de bloqueo iniciado en puerto {Port}", port);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al iniciar servidor de página de bloqueo");
-            // No lanzar excepción para no detener el servicio completo
+            _logger.LogError(ex, "Error al iniciar servidor de pagina de bloqueo");
         }
     }
 
-    /// <summary>
-    /// Detiene el servidor HTTP de página de bloqueo
-    /// </summary>
     private void StopBlockingPageServer()
     {
         try
         {
             _blockingPageServer?.Stop();
             _blockingPageServer?.Dispose();
-            _logger.LogInformation("Servidor de página de bloqueo detenido");
+            _logger.LogInformation("Servidor de pagina de bloqueo detenido");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al detener servidor de página de bloqueo");
+            _logger.LogError(ex, "Error al detener servidor de pagina de bloqueo");
         }
     }
 

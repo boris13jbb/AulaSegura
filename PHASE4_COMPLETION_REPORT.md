@@ -269,7 +269,7 @@ dotnet build AulaSegura.sln --no-incremental
 
 3. **Login:**
    - Username: `admin`
-   - Password: `Admin@123`
+   - Password: `SeedAdmin__Password o first-run-admin.txt`
    - **IMPORTANT:** Change password immediately after first login
 
 4. **Current Functionality:**

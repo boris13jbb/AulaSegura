@@ -346,7 +346,7 @@ Al inicializar la base de datos por primera vez, se crean:
 #### Administrador por Defecto
 ```csharp
 Username: admin
-Password: Admin@123 (hashed con BCrypt, work factor 11)
+Password: SeedAdmin__Password o first-run-admin.txt (hashed con BCrypt, work factor 11)
 Email: admin@aulasegura.local
 FullName: Administrador Principal
 ```

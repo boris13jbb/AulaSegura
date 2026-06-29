@@ -178,7 +178,7 @@ dotnet run
 ### Login Credentials
 ```
 Username: admin
-Password: Admin@123
+Password: SeedAdmin__Password o first-run-admin.txt
 ```
 
 ### Expected Behavior

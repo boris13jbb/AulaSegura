@@ -22,4 +22,9 @@
     <ProjectReference Include="..\AulaSegura.Shared\AulaSegura.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="appsettings*.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="blocking-page.html" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

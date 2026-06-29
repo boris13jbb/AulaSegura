@@ -54,12 +54,12 @@ public class SettingsService : ISettingsService
     public async Task<bool> GetBoolSettingAsync(string key, bool defaultValue = false)
     {
         var value = await GetSettingAsync(key);
-        return string.IsNullOrEmpty(value) ? defaultValue : bool.Parse(value);
+        return bool.TryParse(value, out var parsed) ? parsed : defaultValue;
     }
 
     public async Task<int> GetIntSettingAsync(string key, int defaultValue = 0)
     {
         var value = await GetSettingAsync(key);
-        return string.IsNullOrEmpty(value) ? defaultValue : int.Parse(value);
+        return int.TryParse(value, out var parsed) ? parsed : defaultValue;
     }
 }

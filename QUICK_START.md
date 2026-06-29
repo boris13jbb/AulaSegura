@@ -38,7 +38,7 @@ dotnet run
 
 **Default Credentials:**
 - Username: `admin`
-- Password: `Admin@123`
+- Password: `SeedAdmin__Password o first-run-admin.txt`
 
 **Logs Location:**
 - Console output (real-time)
@@ -371,7 +371,7 @@ notepad C:\Windows\System32\drivers\etc\hosts  # Run as Administrator
 | **Check Status** | `Get-Service -Name AulaSeguraService` |
 | **View Logs** | `Get-Content src\...\Logs\*.log -Tail 50` |
 | **Test Run** | `cd src\AulaSegura.Service && dotnet run` |
-| **Default Login** | `admin` / `Admin@123` |
+| **Default Login** | `admin` / `SeedAdmin__Password o first-run-admin.txt` |
 
 ---
 

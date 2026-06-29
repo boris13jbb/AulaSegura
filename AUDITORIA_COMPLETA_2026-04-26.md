@@ -452,7 +452,7 @@ El sistema DEBE tener:
    - Instale Windows Service con credenciales LocalSystem
    - Configure service para auto-start
    - Cree carpeta de aplicación con permisos restrictivos
-   - Inicialice base de datos con admin por defecto (admin/admin123)
+   - Inicialice base de datos con admin por defecto (admin / contraseña temporal)
    - Configure firewall rules si aplica
 3. Script de desinstalación que:
    - Solicite contraseña de administrador
@@ -834,7 +834,7 @@ Basado en el análisis de brechas, se propone el siguiente plan de acción prior
 
 3. **Inicialización post-instalación** (1 día)
    - Ejecutar DatabaseSeeder para crear admin inicial
-   - Generar contraseña aleatoria o usar default (admin/admin123)
+   - Generar contraseña aleatoria o usar default (admin / contraseña temporal)
    - Mostrar contraseña en pantalla final del instalador
    - Configurar settings iniciales
    - Aplicar permisos de seguridad en DB

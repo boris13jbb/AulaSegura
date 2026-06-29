@@ -19,6 +19,7 @@ public partial class DashboardViewModel : ObservableObject
     private readonly IAllowedSiteService _allowedSiteService;
     private readonly ICategoryService _categoryService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISettingsService _settingsService;
     private readonly IHostsFileAccessProbe _hostsFileAccessProbe;
     private readonly Administrator _currentAdmin;
     private MainWindow? _mainWindow;
@@ -93,6 +94,7 @@ public partial class DashboardViewModel : ObservableObject
         IAllowedSiteService allowedSiteService,
         ICategoryService categoryService,
         IActivityLogService activityLogService,
+        ISettingsService settingsService,
         IHostsFileAccessProbe hostsFileAccessProbe)
     {
         _currentAdmin = currentAdmin;
@@ -100,6 +102,7 @@ public partial class DashboardViewModel : ObservableObject
         _allowedSiteService = allowedSiteService;
         _categoryService = categoryService;
         _activityLogService = activityLogService;
+        _settingsService = settingsService;
         _hostsFileAccessProbe = hostsFileAccessProbe;
 
         RefreshCommand = new AsyncRelayCommand(LoadDashboardDataAsync);
@@ -212,9 +215,7 @@ public partial class DashboardViewModel : ObservableObject
 
     private async Task<string?> GetSettingAsync(string key)
     {
-        // This would ideally use ISettingsService
-        // For now, return null to use defaults
-        return await Task.FromResult<string?>(null);
+        return await _settingsService.GetSettingAsync(key);
     }
 
     private string TranslateProtectionLevel(string level)

@@ -193,7 +193,7 @@ Inicio: Automático
 
 Credenciales por defecto:
   Usuario: admin
-  Contraseña: Admin@123
+  Contraseña: SeedAdmin__Password o first-run-admin.txt
 
 IMPORTANTE: Cambie la contraseña después del primer inicio de sesión.
 ```
@@ -266,7 +266,7 @@ sc.exe query "AulaSeguraService"
 
 4. **Iniciar sesión con credenciales por defecto:**
    - **Usuario:** `admin`
-   - **Contraseña:** `Admin@123`
+   - **Contraseña:** `SeedAdmin__Password o first-run-admin.txt`
 
 5. **¡Listo!** La aplicación mostrará el dashboard principal.
 
@@ -341,7 +341,7 @@ Marque cada ítem después de verificarlo:
 
 - [ ] **Login funciona con credenciales por defecto**
   - Usuario: `admin`
-  - Contraseña: `Admin@123`
+  - Contraseña: `SeedAdmin__Password o first-run-admin.txt`
   - Debe mostrar el dashboard
 
 - [ ] **Archivo hosts tiene respaldo**
@@ -689,7 +689,7 @@ Get-EventLog -LogName Application -Source "AulaSeguraService" -Newest 10
 2. ✅ Ejecutar `install-service.ps1` como Administrador
 3. ✅ Verificar que el servicio está corriendo
 4. ✅ Ejecutar `AulaSegura.App.exe`
-5. ✅ Iniciar sesión con `admin` / `Admin@123`
+5. ✅ Iniciar sesión con `admin` / `SeedAdmin__Password o first-run-admin.txt`
 6. ✅ ¡Listo! Comenzar a configurar reglas de bloqueo
 
 ### Tiempos Estimados

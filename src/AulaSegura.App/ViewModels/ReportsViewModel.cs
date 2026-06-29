@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows.Input;
 using AulaSegura.Core.Entities;
 using AulaSegura.Core.Interfaces;
@@ -126,9 +127,15 @@ public partial class ReportsViewModel : ObservableObject
 
         try
         {
-            var fileName = $"Reporte_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
-            await _reportService.ExportReportToCsvAsync(Reports.Last(), fileName);
-            StatusMessage = $"Reporte exportado: {fileName}";
+            var exportDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "AulaSegura",
+                "Reportes");
+            Directory.CreateDirectory(exportDirectory);
+
+            var filePath = Path.Combine(exportDirectory, $"Reporte_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
+            await _reportService.ExportReportToCsvAsync(Reports.Last(), filePath);
+            StatusMessage = $"Reporte exportado: {filePath}";
         }
         catch (Exception ex)
         {

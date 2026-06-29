@@ -120,7 +120,7 @@ AulaSegura/
    ```
 
 4. **Configurar Seed Data**
-   - Administrador por defecto (admin/admin123)
+   - Administrador por defecto (admin / contraseña temporal)
    - Categorías predefinidas
    - Configuración inicial
 
@@ -166,7 +166,7 @@ dotnet ef database update --startup-project ..\AulaSegura.Service\AulaSegura.Ser
 
 ### Seed Data Inicial (SQL):
 ```sql
--- Administrador por defecto (password: admin123, hash generado con BCrypt)
+-- Administrador por defecto (password: contraseña temporal, hash generado con BCrypt)
 INSERT INTO Administrators (Username, PasswordHash, Email, FullName, IsActive, CreatedAt)
 VALUES ('admin', '$2a$11$...', 'admin@aulasegura.local', 'Administrador', 1, datetime('now'));
 

@@ -796,7 +796,7 @@ New-NetFirewallRule `
 
 4. **Cambiar contraseña por defecto:**
    - Iniciar aplicación WPF
-   - Login con `admin` / `Admin@123`
+   - Login con `admin` / `SeedAdmin__Password o first-run-admin.txt`
    - Ir a Configuración → Cambiar Contraseña
    - Establecer contraseña fuerte
 

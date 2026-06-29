@@ -82,7 +82,7 @@ AulaSegura utiliza el **archivo hosts de Windows** para redirigir sitios bloquea
 
 3. **Ingresar credenciales:**
    - **Usuario por defecto:** `admin`
-   - **Contraseña por defecto:** `Admin@123`
+   - **Contraseña por defecto:** `SeedAdmin__Password o first-run-admin.txt`
 
 4. **Click en "Iniciar Sesión"**
 
@@ -95,7 +95,7 @@ Después del primer inicio de sesión, **cambie la contraseña por defecto**:
 1. Ir a **Configuración** → **Perfil de Administrador**
 2. Click en **"Cambiar Contraseña"**
 3. Ingresar:
-   - Contraseña actual: `Admin@123`
+   - Contraseña actual: `SeedAdmin__Password o first-run-admin.txt`
    - Nueva contraseña: (mínimo 8 caracteres, mayúsculas, minúsculas, números)
    - Confirmar nueva contraseña
 4. Click en **"Guardar"**
@@ -580,7 +580,7 @@ R: Sí. Cree múltiples horarios, uno para cada configuración.
 R: Contacte al administrador principal. Si usted es el único admin:
 1. Detenga el servicio
 2. Elimine el archivo `aulasegura.db`
-3. Reinicie el servicio (recreará la base de datos con contraseña por defecto: `Admin@123`)
+3. Reinicie el servicio (recreará la base de datos con contraseña por defecto: `SeedAdmin__Password o first-run-admin.txt`)
 4. **ADVERTENCIA:** Esto eliminará TODA la configuración
 
 **P: ¿Es seguro cambiar manualmente el archivo hosts?**  

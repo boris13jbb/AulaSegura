@@ -101,7 +101,7 @@ Running  AulaSeguraService  AulaSegura Control Web Service
 
 **PRIMER INICIO DE SESIÓN:**
 - **Usuario:** `admin`
-- **Contraseña:** `Admin@123`
+- **Contraseña:** `SeedAdmin__Password o first-run-admin.txt`
 
 ⚠️ **IMPORTANTE:** 
 - Cambie la contraseña inmediatamente después del primer inicio de sesión

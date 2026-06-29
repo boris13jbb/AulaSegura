@@ -183,8 +183,10 @@ public class BlockingPageServer : IDisposable
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
 
             // Reemplazar placeholders
+            var safeDomain = WebUtility.HtmlEncode(domain);
+
             var html = htmlTemplate
-                .Replace("{{DOMAIN}}", domain)
+                .Replace("{{DOMAIN}}", safeDomain)
                 .Replace("{{CATEGORY}}", "Categoría Restringida")
                 .Replace("{{TIMESTAMP}}", timestamp)
                 .Replace("{{RULE}}", "Lista Negra / Categoría Bloqueada")
@@ -205,6 +207,8 @@ public class BlockingPageServer : IDisposable
     /// </summary>
     private string GenerateSimpleBlockingPage(string domain)
     {
+        var safeDomain = WebUtility.HtmlEncode(domain);
+
         return $@"<!DOCTYPE html>
 <html>
 <head>
@@ -220,7 +224,7 @@ public class BlockingPageServer : IDisposable
 <body>
     <div class=""container"">
         <h1>🚫 Sitio Bloqueado</h1>
-        <p>El acceso a <strong>{domain}</strong> ha sido restringido.</p>
+        <p>El acceso a <strong>{safeDomain}</strong> ha sido restringido.</p>
         <p>Este sitio está bloqueado según las políticas de seguridad configuradas.</p>
         <p style=""margin-top: 30px; color: #999; font-size: 12px;"">
             Protegido por AulaSegura Control Web<br>

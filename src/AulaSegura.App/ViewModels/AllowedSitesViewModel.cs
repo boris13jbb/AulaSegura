@@ -3,26 +3,30 @@ using System.Windows;
 using System.Windows.Input;
 using AulaSegura.Core.Entities;
 using AulaSegura.Core.Interfaces;
+using AulaSegura.Core.Utilities;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace AulaSegura.App.ViewModels;
 
 /// <summary>
-/// ViewModel para gestión de sitios permitidos (whitelist)
+/// ViewModel para gestion de sitios permitidos (whitelist).
 /// </summary>
 public partial class AllowedSitesViewModel : ObservableObject
 {
     private readonly IAllowedSiteService _allowedSiteService;
-    private readonly int _currentAdminId = 1; // TODO: Get from logged-in admin
+    private readonly IBlockedSiteService _blockedSiteService;
+    private int _currentAdminId;
     private MainWindow? _mainWindow;
 
-    /// <summary>
-    /// Sets the parent MainWindow reference for navigation
-    /// </summary>
     public void SetParentWindow(MainWindow mainWindow)
     {
         _mainWindow = mainWindow;
+    }
+
+    public void SetCurrentAdminId(int adminId)
+    {
+        _currentAdminId = adminId;
     }
 
     [ObservableProperty]
@@ -34,7 +38,6 @@ public partial class AllowedSitesViewModel : ObservableObject
     [ObservableProperty]
     private string _searchText = string.Empty;
 
-    // Form fields
     [ObservableProperty]
     private string _formDomain = string.Empty;
 
@@ -53,6 +56,9 @@ public partial class AllowedSitesViewModel : ObservableObject
     [ObservableProperty]
     private string _errorMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _isLoading;
+
     public ICommand LoadDataCommand { get; }
     public ICommand AddNewCommand { get; }
     public ICommand EditCommand { get; }
@@ -62,9 +68,12 @@ public partial class AllowedSitesViewModel : ObservableObject
     public ICommand SearchCommand { get; }
     public ICommand GoBackCommand { get; }
 
-    public AllowedSitesViewModel(IAllowedSiteService allowedSiteService)
+    public AllowedSitesViewModel(
+        IAllowedSiteService allowedSiteService,
+        IBlockedSiteService blockedSiteService)
     {
         _allowedSiteService = allowedSiteService;
+        _blockedSiteService = blockedSiteService;
 
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         AddNewCommand = new RelayCommand(ShowAddForm);
@@ -72,7 +81,7 @@ public partial class AllowedSitesViewModel : ObservableObject
         DeleteCommand = new AsyncRelayCommand<AllowedSite>(DeleteSiteAsync);
         SaveCommand = new AsyncRelayCommand(SaveSiteAsync, CanSaveSite);
         CancelCommand = new RelayCommand(HideForm);
-        SearchCommand = new RelayCommand(FilterSites);
+        SearchCommand = new AsyncRelayCommand(LoadDataAsync);
         GoBackCommand = new RelayCommand(GoBack);
 
         _ = LoadDataAsync();
@@ -82,16 +91,32 @@ public partial class AllowedSitesViewModel : ObservableObject
     {
         try
         {
-            var sites = await _allowedSiteService.GetAllAllowedSitesAsync();
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+
+            var sites = (await _allowedSiteService.GetAllAllowedSitesAsync()).ToList();
+            if (!string.IsNullOrWhiteSpace(SearchText))
+            {
+                var query = SearchText.Trim();
+                sites = sites
+                    .Where(s => s.Domain.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                                s.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
             AllowedSites.Clear();
             foreach (var site in sites)
             {
                 AllowedSites.Add(site);
             }
         }
-        catch (Exception ex)
+        catch
         {
-            ErrorMessage = $"Error al cargar datos: {ex.Message}";
+            ErrorMessage = "No se pudo cargar la lista blanca.";
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
@@ -105,9 +130,10 @@ public partial class AllowedSitesViewModel : ObservableObject
         ErrorMessage = string.Empty;
     }
 
-    private async Task EditSiteAsync(AllowedSite? site)
+    private Task EditSiteAsync(AllowedSite? site)
     {
-        if (site == null) return;
+        if (site == null)
+            return Task.CompletedTask;
 
         IsEditMode = true;
         EditingSiteId = site.Id;
@@ -115,29 +141,35 @@ public partial class AllowedSitesViewModel : ObservableObject
         FormDescription = site.Description ?? string.Empty;
         IsFormVisible = true;
         ErrorMessage = string.Empty;
+
+        return Task.CompletedTask;
     }
 
     private async Task DeleteSiteAsync(AllowedSite? site)
     {
-        if (site == null) return;
+        if (site == null)
+            return;
 
         var result = MessageBox.Show(
-            $"¿Eliminar '{site.Domain}' de la lista blanca?",
+            $"Eliminar '{site.Domain}' de la lista blanca?",
             "Confirmar",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
 
-        if (result == MessageBoxResult.Yes)
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        try
         {
-            try
-            {
-                await _allowedSiteService.DeleteAllowedSiteAsync(site.Id);
-                await LoadDataAsync();
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Error: {ex.Message}";
-            }
+            await _allowedSiteService.DeleteAllowedSiteAsync(site.Id);
+            var syncWarning = await SyncBlockingRulesAsync();
+            await LoadDataAsync();
+            if (!string.IsNullOrWhiteSpace(syncWarning))
+                ErrorMessage = syncWarning;
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error: {ex.Message}";
         }
     }
 
@@ -145,26 +177,39 @@ public partial class AllowedSitesViewModel : ObservableObject
     {
         try
         {
-            var domain = FormDomain.Trim().ToLower();
-            
+            if (_currentAdminId <= 0)
+            {
+                ErrorMessage = "No se encontro la sesion del administrador actual.";
+                return;
+            }
+
+            var normalizedDomain = ValidationHelper.NormalizeDomain(FormDomain);
+            if (!ValidationHelper.IsValidDomain(normalizedDomain))
+            {
+                ErrorMessage = "Dominio no valido.";
+                return;
+            }
+
             if (IsEditMode && EditingSiteId.HasValue)
             {
-                var site = new AllowedSite
+                await _allowedSiteService.UpdateAllowedSiteAsync(new AllowedSite
                 {
                     Id = EditingSiteId.Value,
-                    Domain = domain,
+                    Domain = normalizedDomain,
                     Description = FormDescription,
                     IsActive = true
-                };
-                await _allowedSiteService.UpdateAllowedSiteAsync(site);
+                });
             }
             else
             {
-                await _allowedSiteService.AddAllowedSiteAsync(domain, FormDescription, _currentAdminId);
+                await _allowedSiteService.AddAllowedSiteAsync(normalizedDomain, FormDescription, _currentAdminId);
             }
 
             HideForm();
+            var syncWarning = await SyncBlockingRulesAsync();
             await LoadDataAsync();
+            if (!string.IsNullOrWhiteSpace(syncWarning))
+                ErrorMessage = syncWarning;
         }
         catch (Exception ex)
         {
@@ -177,26 +222,22 @@ public partial class AllowedSitesViewModel : ObservableObject
     private void HideForm()
     {
         IsFormVisible = false;
+        IsEditMode = false;
+        EditingSiteId = null;
         FormDomain = string.Empty;
         FormDescription = string.Empty;
     }
 
-    private void FilterSites()
+    private async Task<string?> SyncBlockingRulesAsync()
     {
-        if (string.IsNullOrWhiteSpace(SearchText))
+        try
         {
-            _ = LoadDataAsync();
-            return;
+            await _blockedSiteService.ApplyBlockingRulesAsync(writeAuditLogEntry: false);
+            return null;
         }
-
-        var filtered = AllowedSites
-            .Where(s => s.Domain.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        AllowedSites.Clear();
-        foreach (var site in filtered)
+        catch (InvalidOperationException ex)
         {
-            AllowedSites.Add(site);
+            return $"Cambios guardados, pero no se pudo sincronizar hosts: {ex.Message}";
         }
     }
 

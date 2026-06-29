@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using AulaSegura.App.ViewModels;
+using System.ComponentModel;
 
 namespace AulaSegura.App.Views;
 
@@ -16,9 +17,16 @@ public partial class LoginView : Window
         InitializeComponent();
         _viewModel = viewModel;
         DataContext = viewModel;
+        _viewModel.PropertyChanged += ViewModel_PropertyChanged;
         
         // Focus en el campo de usuario al iniciar
         Loaded += (s, e) => UsernameTextBox.Focus();
+    }
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(_viewModel.Password) && PasswordBox.Password.Length > 0)
+            PasswordBox.Clear();
     }
 
     private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)

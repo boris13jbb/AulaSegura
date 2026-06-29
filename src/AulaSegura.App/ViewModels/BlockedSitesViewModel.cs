@@ -16,7 +16,7 @@ public partial class BlockedSitesViewModel : ObservableObject
 {
     private readonly IBlockedSiteService _blockedSiteService;
     private readonly ICategoryService _categoryService;
-    private readonly int _currentAdminId = 1; // TODO: Get from logged-in admin
+    private int _currentAdminId;
     private MainWindow? _mainWindow;
 
     /// <summary>
@@ -25,6 +25,11 @@ public partial class BlockedSitesViewModel : ObservableObject
     public void SetParentWindow(MainWindow mainWindow)
     {
         _mainWindow = mainWindow;
+    }
+
+    public void SetCurrentAdminId(int adminId)
+    {
+        _currentAdminId = adminId;
     }
 
     [ObservableProperty]
@@ -263,6 +268,12 @@ public partial class BlockedSitesViewModel : ObservableObject
             if (string.IsNullOrWhiteSpace(FormDomain))
             {
                 ErrorMessage = "El dominio es obligatorio.";
+                return;
+            }
+
+            if (!IsEditMode && _currentAdminId <= 0)
+            {
+                ErrorMessage = "No se encontro la sesion del administrador actual.";
                 return;
             }
 
