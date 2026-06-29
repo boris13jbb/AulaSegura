@@ -1,25 +1,18 @@
 using System.Collections.ObjectModel;
+using System.Windows;
 using System.Windows.Input;
 using AulaSegura.Core.Entities;
 using AulaSegura.Core.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Diagnostics;
 
 namespace AulaSegura.App.ViewModels;
 
 public partial class KeywordsViewModel : ObservableObject
 {
     private readonly IKeywordService _keywordService;
+    private readonly List<Keyword> _allKeywords = [];
     private MainWindow? _mainWindow;
-
-    /// <summary>
-    /// Sets the parent MainWindow reference for navigation
-    /// </summary>
-    public void SetParentWindow(MainWindow mainWindow)
-    {
-        _mainWindow = mainWindow;
-    }
 
     [ObservableProperty]
     private ObservableCollection<Keyword> _keywords = new();
@@ -48,19 +41,15 @@ public partial class KeywordsViewModel : ObservableObject
     public KeywordsViewModel(IKeywordService keywordService)
     {
         _keywordService = keywordService;
+
         LoadKeywordsCommand = new AsyncRelayCommand(LoadKeywordsAsync);
         AddKeywordCommand = new AsyncRelayCommand(AddKeywordAsync);
         UpdateKeywordCommand = new AsyncRelayCommand(UpdateKeywordAsync, () => SelectedKeyword != null);
         DeleteKeywordCommand = new AsyncRelayCommand<Keyword>(DeleteKeywordAsync);
-        EditKeywordCommand = new RelayCommand<Keyword>(EditKeyword, k => k != null);
+        EditKeywordCommand = new RelayCommand<Keyword>(EditKeyword, keyword => keyword != null);
         CancelEditCommand = new RelayCommand(CancelEdit);
-        SearchCommand = new RelayCommand(FilterKeywords);
+        SearchCommand = new RelayCommand(ApplyFilter);
         GoBackCommand = new RelayCommand(GoBack);
-        
-        Debug.WriteLine($"[INIT] KeywordsViewModel inicializado");
-        Debug.WriteLine($"[INIT] EditKeywordCommand: {EditKeywordCommand != null}");
-        Debug.WriteLine($"[INIT] DeleteKeywordCommand: {DeleteKeywordCommand != null}");
-        Debug.WriteLine($"[INIT] UpdateKeywordCommand: {UpdateKeywordCommand != null}");
     }
 
     public ICommand LoadKeywordsCommand { get; }
@@ -71,23 +60,33 @@ public partial class KeywordsViewModel : ObservableObject
     public ICommand CancelEditCommand { get; }
     public ICommand SearchCommand { get; }
     public ICommand GoBackCommand { get; }
+    public IReadOnlyList<KeywordType> KeywordTypes { get; } =
+    [
+        KeywordType.Blocked,
+        KeywordType.Allowed,
+        KeywordType.Warning
+    ];
+
+    public void SetParentWindow(MainWindow mainWindow)
+    {
+        _mainWindow = mainWindow;
+    }
 
     private async Task LoadKeywordsAsync()
     {
         IsLoading = true;
+
         try
         {
             var keywords = await _keywordService.GetAllKeywordsAsync();
-            Keywords.Clear();
-            foreach (var keyword in keywords)
-            {
-                Keywords.Add(keyword);
-            }
-            StatusMessage = $"Cargadas {Keywords.Count} palabras clave";
+
+            _allKeywords.Clear();
+            _allKeywords.AddRange(keywords);
+            ApplyFilter();
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error al cargar: {ex.Message}";
+            StatusMessage = $"Error al cargar palabras clave: {ex.Message}";
         }
         finally
         {
@@ -99,7 +98,7 @@ public partial class KeywordsViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(NewKeyword))
         {
-            StatusMessage = "La palabra clave no puede estar vacía";
+            StatusMessage = "La palabra clave no puede estar vacia";
             return;
         }
 
@@ -120,26 +119,20 @@ public partial class KeywordsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error al agregar: {ex.Message}";
+            StatusMessage = $"Error al agregar palabra clave: {ex.Message}";
         }
     }
 
     private void EditKeyword(Keyword? keyword)
     {
-        if (keyword == null) 
-        {
-            Debug.WriteLine("[ERROR] EditKeyword llamado con keyword nulo");
+        if (keyword == null)
             return;
-        }
-        
-        Debug.WriteLine($"[INFO] Editando keyword: {keyword.Word}, ID: {keyword.Id}");
+
         SelectedKeyword = keyword;
         NewKeyword = keyword.Word;
         SelectedType = keyword.Type;
         IsEditing = true;
         StatusMessage = $"Editando: {keyword.Word}";
-        Debug.WriteLine($"[INFO] SelectedKeyword establecido: {SelectedKeyword?.Word}");
-        Debug.WriteLine($"[INFO] UpdateKeywordCommand CanExecute: {UpdateKeywordCommand.CanExecute(null)}");
     }
 
     private async Task UpdateKeywordAsync()
@@ -157,28 +150,29 @@ public partial class KeywordsViewModel : ObservableObject
             SelectedKeyword.UpdatedAt = DateTime.UtcNow;
 
             await _keywordService.UpdateKeywordAsync(SelectedKeyword);
-            CancelEdit();
+            ResetForm();
             await LoadKeywordsAsync();
             StatusMessage = "Palabra clave actualizada exitosamente";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error al actualizar: {ex.Message}";
+            StatusMessage = $"Error al actualizar palabra clave: {ex.Message}";
         }
-    }
-
-    private void CancelEdit()
-    {
-        SelectedKeyword = null;
-        NewKeyword = string.Empty;
-        SelectedType = KeywordType.Blocked;
-        IsEditing = false;
-        StatusMessage = "Edición cancelada";
     }
 
     private async Task DeleteKeywordAsync(Keyword? keyword)
     {
-        if (keyword == null) return;
+        if (keyword == null)
+            return;
+
+        var result = MessageBox.Show(
+            $"Eliminar la palabra clave '{keyword.Word}'?",
+            "Confirmar eliminacion",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes)
+            return;
 
         try
         {
@@ -188,8 +182,42 @@ public partial class KeywordsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error al eliminar: {ex.Message}";
+            StatusMessage = $"Error al eliminar palabra clave: {ex.Message}";
         }
+    }
+
+    private void ApplyFilter()
+    {
+        var filter = SearchText.Trim();
+        var filtered = string.IsNullOrWhiteSpace(filter)
+            ? _allKeywords
+            : _allKeywords
+                .Where(keyword => keyword.Word.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                                  keyword.Type.ToString().Contains(filter, StringComparison.OrdinalIgnoreCase));
+
+        Keywords.Clear();
+        foreach (var keyword in filtered.OrderBy(keyword => keyword.Word))
+        {
+            Keywords.Add(keyword);
+        }
+
+        StatusMessage = string.IsNullOrWhiteSpace(filter)
+            ? $"Cargadas {Keywords.Count} palabras clave"
+            : $"Filtro aplicado: {Keywords.Count} resultado(s)";
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+        StatusMessage = "Edicion cancelada";
+    }
+
+    private void ResetForm()
+    {
+        SelectedKeyword = null;
+        NewKeyword = string.Empty;
+        SelectedType = KeywordType.Blocked;
+        IsEditing = false;
     }
 
     private void GoBack()
@@ -197,23 +225,16 @@ public partial class KeywordsViewModel : ObservableObject
         _mainWindow?.NavigateToDashboard();
     }
 
-    private void FilterKeywords()
+    partial void OnSearchTextChanged(string value)
     {
-        // Implementación básica de filtrado
-        // En una implementación completa, esto filtraría la colección observable
+        ApplyFilter();
     }
 
     partial void OnSelectedKeywordChanged(Keyword? value)
     {
-        Debug.WriteLine($"[DEBUG] OnSelectedKeywordChanged llamado. Valor: {value?.Word ?? "null"}");
-        if (UpdateKeywordCommand is AsyncRelayCommand cmd)
+        if (UpdateKeywordCommand is AsyncRelayCommand command)
         {
-            cmd.NotifyCanExecuteChanged();
-            Debug.WriteLine($"[DEBUG] NotifyCanExecuteChanged llamado. CanExecute ahora: {cmd.CanExecute(null)}");
-        }
-        else
-        {
-            Debug.WriteLine("[ERROR] UpdateKeywordCommand no es AsyncRelayCommand");
+            command.NotifyCanExecuteChanged();
         }
     }
 }

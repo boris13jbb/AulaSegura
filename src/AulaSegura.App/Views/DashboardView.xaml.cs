@@ -25,19 +25,12 @@ public partial class DashboardView : Window
     /// </summary>
     public void SetParentWindow(MainWindow mainWindow)
     {
-        System.Diagnostics.Debug.WriteLine($"[DashboardView] SetParentWindow called");
         _mainWindow = mainWindow;
         
         // If ViewModel is already set, update its navigation reference
         if (DataContext is DashboardViewModel vm)
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardView] DataContext found, calling vm.SetParentWindow");
             vm.SetParentWindow(mainWindow);
-        }
-        else
-        {
-            System.Diagnostics.Debug.WriteLine($"[DashboardView] WARNING: DataContext is NOT DashboardViewModel!");
-            System.Diagnostics.Debug.WriteLine($"[DashboardView] DataContext type: {DataContext?.GetType().Name ?? "null"}");
         }
     }
 }

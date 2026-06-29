@@ -15,6 +15,7 @@ public partial class SchedulesViewModel : ObservableObject
 {
     private readonly IScheduleService _scheduleService;
     private readonly ICategoryService _categoryService;
+    private readonly IBlockedSiteService _blockedSiteService;
     private MainWindow? _mainWindow;
 
     /// <summary>
@@ -69,13 +70,25 @@ public partial class SchedulesViewModel : ObservableObject
     public ICommand SaveCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand GoBackCommand { get; }
+    public IReadOnlyList<DayOfWeek> AvailableDays { get; } =
+    [
+        DayOfWeek.Monday,
+        DayOfWeek.Tuesday,
+        DayOfWeek.Wednesday,
+        DayOfWeek.Thursday,
+        DayOfWeek.Friday,
+        DayOfWeek.Saturday,
+        DayOfWeek.Sunday
+    ];
 
     public SchedulesViewModel(
         IScheduleService scheduleService,
-        ICategoryService categoryService)
+        ICategoryService categoryService,
+        IBlockedSiteService blockedSiteService)
     {
         _scheduleService = scheduleService;
         _categoryService = categoryService;
+        _blockedSiteService = blockedSiteService;
 
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         AddNewCommand = new RelayCommand(ShowAddForm);
@@ -162,6 +175,7 @@ public partial class SchedulesViewModel : ObservableObject
             try
             {
                 await _scheduleService.DeleteScheduleAsync(schedule.Id);
+                await _blockedSiteService.ApplyBlockingRulesAsync(writeAuditLogEntry: false);
                 await LoadDataAsync();
             }
             catch (Exception ex)
@@ -193,12 +207,13 @@ public partial class SchedulesViewModel : ObservableObject
             {
                 await _scheduleService.CreateScheduleAsync(
                     FormName.Trim(),
-                    FormCategoryId,
+                    FormCategoryId > 0 ? FormCategoryId : null,
                     FormDayOfWeek,
                     FormStartTime,
                     FormEndTime);
             }
 
+            await _blockedSiteService.ApplyBlockingRulesAsync(writeAuditLogEntry: false);
             HideForm();
             await LoadDataAsync();
         }

@@ -29,7 +29,6 @@ public partial class DashboardViewModel : ObservableObject
     /// </summary>
     public void SetParentWindow(MainWindow mainWindow)
     {
-        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] SetParentWindow called");
         _mainWindow = mainWindow;
     }
 
@@ -184,10 +183,11 @@ public partial class DashboardViewModel : ObservableObject
                 HostsProbeTimeText = $"Intento: {DateTime.Now:dd/MM/yyyy HH:mm:ss}";
             }
         }
-        catch (Exception ex)
+        catch
         {
-            // Log error but don't crash the UI
-            System.Diagnostics.Debug.WriteLine($"Error loading dashboard: {ex.Message}");
+            HostsFileCanWrite = false;
+            HostsFilePrimaryStatus = "Dashboard: error al cargar datos";
+            HostsFileDetail = "Revise la configuracion y vuelva a actualizar.";
         }
     }
 
@@ -232,12 +232,8 @@ public partial class DashboardViewModel : ObservableObject
 
     private void NavigateTo(string screen)
     {
-        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] NavigateTo called with screen: {screen}");
-        System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] _mainWindow is null: {_mainWindow == null}");
-        
         if (_mainWindow == null)
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] ERROR: MainWindow reference is null!");
             System.Windows.MessageBox.Show(
                 $"Error de navegación: No se puede navegar a {screen}.\n\nPor favor, reinicie la aplicación.",
                 "Error de Navegación",
@@ -248,53 +244,39 @@ public partial class DashboardViewModel : ObservableObject
 
         try
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Attempting navigation to: {screen}");
-            
             // Navigate to the appropriate screen
             switch (screen)
             {
                 case "BlockedSites":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToBlockedSites");
                     _mainWindow.NavigateToBlockedSites(_currentAdmin);
                     break;
                 case "AllowedSites":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToAllowedSites");
                     _mainWindow.NavigateToAllowedSites(_currentAdmin);
                     break;
                 case "Categories":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToCategories");
                     _mainWindow.NavigateToCategories(_currentAdmin);
                     break;
                 case "Schedules":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToSchedules");
                     _mainWindow.NavigateToSchedules(_currentAdmin);
                     break;
                 case "Settings":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToSettings");
                     _mainWindow.NavigateToSettings(_currentAdmin);
                     break;
                 case "Keywords":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToKeywords");
                     _mainWindow.NavigateToKeywords(_currentAdmin);
                     break;
                 case "BlockingRules":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToBlockingRules");
                     _mainWindow.NavigateToBlockingRules(_currentAdmin);
                     break;
                 case "Reports":
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Calling NavigateToReports");
                     _mainWindow.NavigateToReports(_currentAdmin);
                     break;
                 default:
-                    System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Unknown screen: {screen}");
                     break;
             }
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Navigation completed successfully");
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Navigation error: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[DashboardViewModel] Stack trace: {ex.StackTrace}");
             System.Windows.MessageBox.Show(
                 $"Error al navegar a {screen}:\n\n{ex.Message}",
                 "Error de Navegación",

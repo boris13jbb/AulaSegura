@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AulaSegura.Infrastructure.Services;
 
 /// <summary>
-/// Servicio de gestión de sitios bloqueados y archivo hosts
+/// Manages blocked sites and synchronizes effective blocking rules with the hosts file.
 /// </summary>
 public class BlockedSiteService : IBlockedSiteService
 {
@@ -18,7 +18,7 @@ public class BlockedSiteService : IBlockedSiteService
     private readonly HostsFileManager _hostsFileManager;
 
     public BlockedSiteService(
-        AulaSeguraDbContext context, 
+        AulaSeguraDbContext context,
         IActivityLogService activityLogService,
         IBackupService backupService)
     {
@@ -30,23 +30,24 @@ public class BlockedSiteService : IBlockedSiteService
 
     public async Task<BlockedSite> AddBlockedSiteAsync(string domain, int categoryId, string reason, int adminId)
     {
-        // Normalizar dominio
         var normalizedDomain = ValidationHelper.NormalizeDomain(domain);
-        
+
         if (!ValidationHelper.IsValidDomain(normalizedDomain))
-            throw new ArgumentException($"Dominio inválido: {domain}");
+            throw new ArgumentException($"Dominio invalido: {domain}", nameof(domain));
 
-        // Duplicado activo
+        await EnsureCategoryExistsAsync(categoryId);
+
         if (await _context.BlockedSites.AnyAsync(b => b.Domain == normalizedDomain && b.IsActive))
-            throw new InvalidOperationException($"El dominio {normalizedDomain} ya está bloqueado");
+            throw new InvalidOperationException($"El dominio {normalizedDomain} ya esta bloqueado");
 
-        // Mismo dominio pero registro desactivado ("eliminado"): reactivar fila existente (Domain es único en BD)
-        var inactive = await _context.BlockedSites.FirstOrDefaultAsync(b => b.Domain == normalizedDomain && !b.IsActive);
+        var inactive = await _context.BlockedSites
+            .FirstOrDefaultAsync(b => b.Domain == normalizedDomain && !b.IsActive);
+
         if (inactive != null)
         {
             inactive.IsActive = true;
             inactive.CategoryId = categoryId;
-            inactive.Reason = reason;
+            inactive.Reason = (reason ?? string.Empty).Trim();
             inactive.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
@@ -67,7 +68,7 @@ public class BlockedSiteService : IBlockedSiteService
         {
             Domain = normalizedDomain,
             CategoryId = categoryId,
-            Reason = reason,
+            Reason = (reason ?? string.Empty).Trim(),
             CreatedByAdminId = adminId,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
@@ -99,6 +100,8 @@ public class BlockedSiteService : IBlockedSiteService
         if (!ValidationHelper.IsValidDomain(normalizedDomain))
             throw new ArgumentException($"Dominio invalido: {site.Domain}", nameof(site));
 
+        await EnsureCategoryExistsAsync(site.CategoryId);
+
         var duplicate = await _context.BlockedSites.AnyAsync(b =>
             b.Id != site.Id &&
             b.Domain == normalizedDomain &&
@@ -109,7 +112,7 @@ public class BlockedSiteService : IBlockedSiteService
 
         existing.Domain = normalizedDomain;
         existing.CategoryId = site.CategoryId;
-        existing.Reason = site.Reason;
+        existing.Reason = (site.Reason ?? string.Empty).Trim();
         existing.BlockSubdomains = site.BlockSubdomains;
         existing.IsActive = site.IsActive;
         existing.UpdatedAt = DateTime.UtcNow;
@@ -157,7 +160,9 @@ public class BlockedSiteService : IBlockedSiteService
 
     public async Task<IEnumerable<BlockedSite>> GetAllBlockedSitesAsync(bool includeInactive = false)
     {
-        var query = _context.BlockedSites.Include(b => b.Category).AsQueryable();
+        var query = _context.BlockedSites
+            .Include(b => b.Category)
+            .AsQueryable();
 
         if (!includeInactive)
             query = query.Where(b => b.IsActive);
@@ -173,14 +178,31 @@ public class BlockedSiteService : IBlockedSiteService
         return await _context.BlockedSites
             .Include(b => b.Category)
             .Where(b => b.CategoryId == categoryId && b.IsActive)
+            .OrderBy(b => b.Domain)
             .ToListAsync();
     }
 
     public async Task<bool> IsDomainBlockedAsync(string domain)
     {
         var normalizedDomain = ValidationHelper.NormalizeDomain(domain);
-        return await _context.BlockedSites
-            .AnyAsync(b => b.Domain == normalizedDomain && b.IsActive);
+        if (string.IsNullOrWhiteSpace(normalizedDomain))
+            return false;
+
+        if (await _context.AllowedSites.AnyAsync(a => a.Domain == normalizedDomain && a.IsActive))
+            return false;
+
+        var blockedSite = await _context.BlockedSites
+            .FirstOrDefaultAsync(b => b.Domain == normalizedDomain && b.IsActive);
+
+        if (blockedSite == null)
+            return false;
+
+        var schedules = await _context.Schedules
+            .Where(s => s.IsActive && (s.CategoryId == null || s.CategoryId == blockedSite.CategoryId))
+            .ToListAsync();
+
+        return schedules.Count == 0 ||
+               schedules.Any(schedule => IsScheduleActiveAt(schedule, DateTime.Now));
     }
 
     public async Task ApplyBlockingRulesAsync(bool writeAuditLogEntry = true)
@@ -193,39 +215,56 @@ public class BlockedSiteService : IBlockedSiteService
                 .Where(b => b.IsActive)
                 .ToListAsync();
 
-            var allowedSitesRaw = await _context.AllowedSites
+            var activeSchedules = await _context.Schedules
+                .Where(s => s.IsActive)
+                .ToListAsync();
+
+            var allowedNormalized = await _context.AllowedSites
                 .Where(a => a.IsActive)
                 .Select(a => a.Domain)
                 .ToListAsync();
 
-            var allowedNormalized = allowedSitesRaw
+            var allowedDomains = allowedNormalized
                 .Select(ValidationHelper.NormalizeDomain)
-                .Where(d => !string.IsNullOrEmpty(d))
+                .Where(domain => !string.IsNullOrWhiteSpace(domain))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             await _hostsFileManager.ClearAllAulaSeguraEntriesAsync();
 
             int domainsWrittenToHosts = 0;
             int hostsLinesWritten = 0;
+            int domainsSkippedBySchedule = 0;
+            var now = DateTime.Now;
 
             foreach (var site in blockedSites)
             {
                 var normalizedSite = ValidationHelper.NormalizeDomain(site.Domain);
+                if (string.IsNullOrWhiteSpace(normalizedSite))
+                    continue;
 
-                var isInWhitelist = allowedNormalized.Contains(normalizedSite);
+                if (allowedDomains.Contains(normalizedSite))
+                    continue;
 
-                if (!isInWhitelist)
+                var schedulesForSite = activeSchedules
+                    .Where(schedule => AppliesToCategory(schedule, site.CategoryId))
+                    .ToList();
+
+                if (schedulesForSite.Count > 0 &&
+                    !schedulesForSite.Any(schedule => IsScheduleActiveAt(schedule, now)))
                 {
-                    domainsWrittenToHosts++;
+                    domainsSkippedBySchedule++;
+                    continue;
+                }
 
-                    await _hostsFileManager.AddEntryAsync(site.Domain);
+                domainsWrittenToHosts++;
+
+                await _hostsFileManager.AddEntryAsync(normalizedSite);
+                hostsLinesWritten++;
+
+                if (site.BlockSubdomains && !normalizedSite.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _hostsFileManager.AddEntryAsync($"www.{normalizedSite}");
                     hostsLinesWritten++;
-
-                    if (site.BlockSubdomains && !site.Domain.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
-                    {
-                        await _hostsFileManager.AddEntryAsync($"www.{site.Domain}");
-                        hostsLinesWritten++;
-                    }
                 }
             }
 
@@ -233,7 +272,7 @@ public class BlockedSiteService : IBlockedSiteService
             {
                 await _activityLogService.LogActivityAsync(
                     SystemConstants.LogActions.ApplyBlockingRules,
-                    $"Reglas aplicadas al archivo hosts. Dominios aplicados (no lista blanca): {domainsWrittenToHosts}. Entradas en hosts añadidas: {hostsLinesWritten} (p. ej. dominio + www).",
+                    $"Reglas aplicadas al archivo hosts. Dominios aplicados: {domainsWrittenToHosts}. Omitidos por horario: {domainsSkippedBySchedule}. Entradas anadidas: {hostsLinesWritten}.",
                     "System",
                     null,
                     null,
@@ -244,7 +283,7 @@ public class BlockedSiteService : IBlockedSiteService
         {
             throw new InvalidOperationException(
                 "Se requieren permisos de administrador para modificar el archivo hosts. " +
-                "Ejecute la aplicación como administrador.");
+                "Ejecute la aplicacion como administrador.");
         }
         catch (Exception ex)
         {
@@ -258,5 +297,34 @@ public class BlockedSiteService : IBlockedSiteService
 
             throw;
         }
+    }
+
+    private async Task EnsureCategoryExistsAsync(int categoryId)
+    {
+        var exists = await _context.Categories.AnyAsync(c => c.Id == categoryId && c.IsActive);
+        if (!exists)
+            throw new InvalidOperationException("La categoria seleccionada no existe o esta inactiva");
+    }
+
+    private static bool AppliesToCategory(Schedule schedule, int categoryId)
+    {
+        return schedule.CategoryId == null || schedule.CategoryId == categoryId;
+    }
+
+    private static bool IsScheduleActiveAt(Schedule schedule, DateTime dateTime)
+    {
+        var currentDay = dateTime.DayOfWeek;
+        var previousDay = (DayOfWeek)(((int)currentDay + 6) % 7);
+        var currentTime = dateTime.TimeOfDay;
+
+        if (schedule.StartTime <= schedule.EndTime)
+        {
+            return schedule.DayOfWeek == currentDay &&
+                   currentTime >= schedule.StartTime &&
+                   currentTime <= schedule.EndTime;
+        }
+
+        return (schedule.DayOfWeek == currentDay && currentTime >= schedule.StartTime) ||
+               (schedule.DayOfWeek == previousDay && currentTime <= schedule.EndTime);
     }
 }

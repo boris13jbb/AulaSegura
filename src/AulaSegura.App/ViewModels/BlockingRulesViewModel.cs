@@ -1,26 +1,22 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Windows;
 using System.Windows.Input;
 using AulaSegura.Core.Entities;
 using AulaSegura.Core.Interfaces;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Diagnostics;
 
 namespace AulaSegura.App.ViewModels;
 
 public partial class BlockingRulesViewModel : ObservableObject
 {
+    private const string CategoryRuleType = "CATEGORY";
+    private const string BlockAction = "Block";
+
     private readonly IBlockingRuleService _blockingRuleService;
     private readonly ICategoryService _categoryService;
     private MainWindow? _mainWindow;
-
-    /// <summary>
-    /// Sets the parent MainWindow reference for navigation
-    /// </summary>
-    public void SetParentWindow(MainWindow mainWindow)
-    {
-        _mainWindow = mainWindow;
-    }
 
     [ObservableProperty]
     private ObservableCollection<BlockingRule> _rules = new();
@@ -56,20 +52,15 @@ public partial class BlockingRulesViewModel : ObservableObject
     {
         _blockingRuleService = blockingRuleService;
         _categoryService = categoryService;
-        
+
         LoadRulesCommand = new AsyncRelayCommand(LoadRulesAsync);
         LoadCategoriesCommand = new AsyncRelayCommand(LoadCategoriesAsync);
         AddRuleCommand = new AsyncRelayCommand(AddRuleAsync);
         UpdateRuleCommand = new AsyncRelayCommand(UpdateRuleAsync, () => SelectedRule != null);
         DeleteRuleCommand = new AsyncRelayCommand<BlockingRule>(DeleteRuleAsync);
-        EditRuleCommand = new RelayCommand<BlockingRule>(EditRule, r => r != null);
+        EditRuleCommand = new RelayCommand<BlockingRule>(EditRule, rule => rule != null);
         CancelEditCommand = new RelayCommand(CancelEdit);
         GoBackCommand = new RelayCommand(GoBack);
-        
-        Debug.WriteLine($"[INIT] BlockingRulesViewModel inicializado");
-        Debug.WriteLine($"[INIT] EditRuleCommand: {EditRuleCommand != null}");
-        Debug.WriteLine($"[INIT] DeleteRuleCommand: {DeleteRuleCommand != null}");
-        Debug.WriteLine($"[INIT] UpdateRuleCommand: {UpdateRuleCommand != null}");
     }
 
     public ICommand LoadRulesCommand { get; }
@@ -81,17 +72,25 @@ public partial class BlockingRulesViewModel : ObservableObject
     public ICommand CancelEditCommand { get; }
     public ICommand GoBackCommand { get; }
 
+    public void SetParentWindow(MainWindow mainWindow)
+    {
+        _mainWindow = mainWindow;
+    }
+
     private async Task LoadRulesAsync()
     {
         IsLoading = true;
+
         try
         {
             var rules = await _blockingRuleService.GetAllRulesAsync();
             Rules.Clear();
+
             foreach (var rule in rules)
             {
                 Rules.Add(rule);
             }
+
             StatusMessage = $"Cargadas {Rules.Count} reglas de bloqueo";
         }
         catch (Exception ex)
@@ -108,41 +107,31 @@ public partial class BlockingRulesViewModel : ObservableObject
     {
         try
         {
-            var categories = await _categoryService.GetAllCategoriesAsync();
+            var categories = await _categoryService.GetActiveCategoriesAsync();
             Categories.Clear();
-            foreach (var category in categories.Where(c => c.IsActive))
+
+            foreach (var category in categories)
             {
                 Categories.Add(category);
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error al cargar categorías: {ex.Message}";
+            StatusMessage = $"Error al cargar categorias: {ex.Message}";
         }
     }
 
     private async Task AddRuleAsync()
     {
-        if (string.IsNullOrWhiteSpace(NewRuleName) || SelectedCategory == null)
-        {
-            StatusMessage = "Complete todos los campos requeridos";
+        if (!ValidateForm())
             return;
-        }
 
         try
         {
-            var rule = new BlockingRule
-            {
-                Name = NewRuleName.Trim(),
-                CategoryId = SelectedCategory.Id,
-                MaxViolations = MaxViolations,
-                BlockDurationMinutes = BlockDurationMinutes,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
+            var rule = BuildRuleFromForm(new BlockingRule());
             await _blockingRuleService.AddRuleAsync(rule);
-            NewRuleName = string.Empty;
+
+            ResetForm();
             await LoadRulesAsync();
             StatusMessage = "Regla de bloqueo creada exitosamente";
         }
@@ -154,65 +143,51 @@ public partial class BlockingRulesViewModel : ObservableObject
 
     private void EditRule(BlockingRule? rule)
     {
-        if (rule == null) 
-        {
-            Debug.WriteLine("[ERROR] EditRule llamado con rule nulo");
+        if (rule == null)
             return;
-        }
-        
-        Debug.WriteLine($"[INFO] Editando regla: {rule.Name}, ID: {rule.Id}");
+
         SelectedRule = rule;
         NewRuleName = rule.Name;
         SelectedCategory = Categories.FirstOrDefault(c => c.Id == rule.CategoryId);
-        MaxViolations = rule.MaxViolations;
-        BlockDurationMinutes = rule.BlockDurationMinutes;
+        MaxViolations = Math.Max(1, rule.MaxViolations);
+        BlockDurationMinutes = Math.Max(1, rule.BlockDurationMinutes);
         IsEditing = true;
         StatusMessage = $"Editando: {rule.Name}";
-        Debug.WriteLine($"[INFO] SelectedRule establecido: {SelectedRule?.Name}");
-        Debug.WriteLine($"[INFO] UpdateRuleCommand CanExecute: {UpdateRuleCommand.CanExecute(null)}");
     }
 
     private async Task UpdateRuleAsync()
     {
-        if (SelectedRule == null || string.IsNullOrWhiteSpace(NewRuleName) || SelectedCategory == null)
-        {
-            StatusMessage = "Complete todos los campos requeridos";
+        if (SelectedRule == null || !ValidateForm())
             return;
-        }
 
         try
         {
-            SelectedRule.Name = NewRuleName.Trim();
-            SelectedRule.CategoryId = SelectedCategory.Id;
-            SelectedRule.MaxViolations = MaxViolations;
-            SelectedRule.BlockDurationMinutes = BlockDurationMinutes;
-            SelectedRule.UpdatedAt = DateTime.UtcNow;
-
+            BuildRuleFromForm(SelectedRule);
             await _blockingRuleService.UpdateRuleAsync(SelectedRule);
-            CancelEdit();
+
+            ResetForm();
             await LoadRulesAsync();
             StatusMessage = "Regla actualizada exitosamente";
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error al actualizar: {ex.Message}";
+            StatusMessage = $"Error al actualizar regla: {ex.Message}";
         }
-    }
-
-    private void CancelEdit()
-    {
-        SelectedRule = null;
-        NewRuleName = string.Empty;
-        SelectedCategory = null;
-        MaxViolations = 3;
-        BlockDurationMinutes = 30;
-        IsEditing = false;
-        StatusMessage = "Edición cancelada";
     }
 
     private async Task DeleteRuleAsync(BlockingRule? rule)
     {
-        if (rule == null) return;
+        if (rule == null)
+            return;
+
+        var result = MessageBox.Show(
+            $"Eliminar la regla '{rule.Name}'?",
+            "Confirmar eliminacion",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes)
+            return;
 
         try
         {
@@ -222,8 +197,69 @@ public partial class BlockingRulesViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error al eliminar: {ex.Message}";
+            StatusMessage = $"Error al eliminar regla: {ex.Message}";
         }
+    }
+
+    private bool ValidateForm()
+    {
+        if (string.IsNullOrWhiteSpace(NewRuleName))
+        {
+            StatusMessage = "Ingrese el nombre de la regla";
+            return false;
+        }
+
+        if (SelectedCategory == null)
+        {
+            StatusMessage = "Seleccione una categoria activa";
+            return false;
+        }
+
+        if (MaxViolations < 1)
+        {
+            StatusMessage = "El maximo de violaciones debe ser mayor a cero";
+            return false;
+        }
+
+        if (BlockDurationMinutes < 1)
+        {
+            StatusMessage = "La duracion del bloqueo debe ser mayor a cero";
+            return false;
+        }
+
+        return true;
+    }
+
+    private BlockingRule BuildRuleFromForm(BlockingRule rule)
+    {
+        var categoryId = SelectedCategory!.Id;
+
+        rule.Name = NewRuleName.Trim();
+        rule.CategoryId = categoryId;
+        rule.RuleType = CategoryRuleType;
+        rule.Action = BlockAction;
+        rule.Value = categoryId.ToString(CultureInfo.InvariantCulture);
+        rule.MaxViolations = MaxViolations;
+        rule.BlockDurationMinutes = BlockDurationMinutes;
+        rule.IsActive = true;
+
+        return rule;
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+        StatusMessage = "Edicion cancelada";
+    }
+
+    private void ResetForm()
+    {
+        SelectedRule = null;
+        NewRuleName = string.Empty;
+        SelectedCategory = null;
+        MaxViolations = 3;
+        BlockDurationMinutes = 30;
+        IsEditing = false;
     }
 
     private void GoBack()
@@ -233,15 +269,9 @@ public partial class BlockingRulesViewModel : ObservableObject
 
     partial void OnSelectedRuleChanged(BlockingRule? value)
     {
-        Debug.WriteLine($"[DEBUG] OnSelectedRuleChanged llamado. Valor: {value?.Name ?? "null"}");
-        if (UpdateRuleCommand is AsyncRelayCommand cmd)
+        if (UpdateRuleCommand is AsyncRelayCommand command)
         {
-            cmd.NotifyCanExecuteChanged();
-            Debug.WriteLine($"[DEBUG] NotifyCanExecuteChanged llamado. CanExecute ahora: {cmd.CanExecute(null)}");
-        }
-        else
-        {
-            Debug.WriteLine("[ERROR] UpdateRuleCommand no es AsyncRelayCommand");
+            command.NotifyCanExecuteChanged();
         }
     }
 }

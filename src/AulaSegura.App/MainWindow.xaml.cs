@@ -188,7 +188,8 @@ public partial class MainWindow : Window
         {
             var viewModel = new SchedulesViewModel(
                 _serviceProvider.GetRequiredService<IScheduleService>(),
-                _serviceProvider.GetRequiredService<ICategoryService>());
+                _serviceProvider.GetRequiredService<ICategoryService>(),
+                _serviceProvider.GetRequiredService<IBlockedSiteService>());
             
             // Set the MainWindow reference
             viewModel.SetParentWindow(this);
@@ -222,7 +223,9 @@ public partial class MainWindow : Window
         {
             var viewModel = new SettingsViewModel(
                 _serviceProvider.GetRequiredService<IAuthService>(),
-                _serviceProvider.GetRequiredService<ISettingsService>());
+                _serviceProvider.GetRequiredService<ISettingsService>(),
+                _serviceProvider.GetRequiredService<IBackupService>(),
+                _serviceProvider.GetRequiredService<IBlockedSiteService>());
             
             // Set the MainWindow reference
             viewModel.SetParentWindow(this);

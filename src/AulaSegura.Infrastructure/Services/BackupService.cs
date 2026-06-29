@@ -32,6 +32,9 @@ public class BackupService : IBackupService
         var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var backupDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, SystemConstants.Paths.BackupsPath);
         Directory.CreateDirectory(backupDir);
+        var normalizedDescription = string.IsNullOrWhiteSpace(description)
+            ? "Respaldo manual"
+            : description.Trim();
 
         var backupFileName = $"backup_{timestamp}.json";
         var backupPath = Path.Combine(backupDir, backupFileName);
@@ -40,7 +43,7 @@ public class BackupService : IBackupService
         {
             Timestamp = DateTime.UtcNow,
             Type = string.IsNullOrWhiteSpace(backupType) ? "Full" : backupType.Trim(),
-            Description = description.Trim(),
+            Description = normalizedDescription,
             Categories = await _context.Categories.AsNoTracking().Select(c => new CategoryBackupItem
             {
                 Id = c.Id,
@@ -127,7 +130,7 @@ public class BackupService : IBackupService
         var backup = new Backup
         {
             BackupPath = backupPath,
-            Description = string.IsNullOrWhiteSpace(description) ? "Respaldo manual" : description.Trim(),
+            Description = normalizedDescription,
             BackupType = backupData.Type,
             SizeInBytes = new FileInfo(backupPath).Length,
             CreatedByAdminId = adminId,
@@ -173,6 +176,8 @@ public class BackupService : IBackupService
         await _context.BlockingRules.ExecuteDeleteAsync();
         await _context.Settings.ExecuteDeleteAsync();
         await _context.Categories.ExecuteDeleteAsync();
+
+        _context.ChangeTracker.Clear();
 
         await _context.Categories.AddRangeAsync(document.Categories.Select(c => new Category
         {
